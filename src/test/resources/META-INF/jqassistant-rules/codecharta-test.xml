@@ -1,0 +1,22 @@
+<jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.2"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
+
+    <concept id="codecharta-test:Report">
+        <description>Creates a CodeCharta JSON report.</description>
+        <cypher><![CDATA[
+            MATCH
+              (root:Directory)-[:CONTAINS*]->(element:File)
+            WHERE
+              not (:Directory)-[:CONTAINS]->(root)
+            WITH
+              element, split(element.fileName, "/") as pathSegments
+            OPTIONAL MATCH
+              (root)-[:CONTAINS]->(parent:Directory)-[:CONTAINS]->(element)
+            RETURN
+              element, pathSegments[size(pathSegments)-1] as elementLabel, parent, { length: size(element.fileName) } AS metrics
+            ]]></cypher>
+        <report type="codecharta"/>
+    </concept>
+
+</jqassistant-rules>
