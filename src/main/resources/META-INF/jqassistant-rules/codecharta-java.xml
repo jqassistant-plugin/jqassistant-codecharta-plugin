@@ -41,9 +41,10 @@
         <description>Creates a CodeCharta report for Java types.</description>
         <cypher><![CDATA[
             MATCH
-              (:Artifact)-[:CONTAINS]->(element:Type|Package)
-            WHERE NOT
-              element:Generated
+              (:Artifact)-[:CONTAINS]->(element:Java)
+            WHERE
+              (element:Type or element:Package)
+              and not element:Generated
             OPTIONAL MATCH
               (parent:Package)-[:CONTAINS]->(element)
             OPTIONAL MATCH
