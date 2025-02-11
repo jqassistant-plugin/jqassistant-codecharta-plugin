@@ -4,7 +4,14 @@
                     name="jQAssistant CodeCharta Plugin" id="jqa.plugin.codecharta"
                     version="${project.version}">
     <description>Plugin for jQAssistant for creating reports for CodeCharta visualizations.</description>
+    <model>
+        <class>org.jqassistant.plugin.codecharta.impl.model.MetricsDescriptor</class>
+    </model>
+    <rules>
+        <resource>codecharta.xml</resource>
+        <resource>codecharta-java.xml</resource>
+    </rules>
     <report>
         <class id="codecharta">org.jqassistant.plugin.codecharta.impl.CodeChartaReportPlugin</class>
-    </report>s
+    </report>
 </jqassistant-plugin>

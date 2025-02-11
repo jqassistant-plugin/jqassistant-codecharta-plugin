@@ -3,23 +3,22 @@ package org.jqassistant.plugin.codecharta;
 import java.io.File;
 
 import com.buschmais.jqassistant.core.rule.api.model.RuleException;
-import com.buschmais.jqassistant.core.scanner.api.DefaultScope;
-import com.buschmais.jqassistant.core.test.plugin.AbstractPluginIT;
+import com.buschmais.jqassistant.plugin.java.test.AbstractJavaPluginIT;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CodeChartaIT extends AbstractPluginIT {
+class CodeChartaIT extends AbstractJavaPluginIT {
 
     @Test
-    void files() throws RuleException {
+    void javaReport() throws RuleException {
         File classesDirectory = getClassesDirectory(CodeChartaIT.class);
-        getScanner().scan(classesDirectory, classesDirectory.getAbsolutePath(), DefaultScope.NONE);
+        scanClassPathDirectory(classesDirectory);
 
-        applyConcept("codecharta-test:Report");
+        applyConcept("codecharta-java:Report");
 
-        assertThat(new File("target/jqassistant/report/codecharta/codecharta-test_Report.cc.json")).exists();
+        assertThat(new File("target/jqassistant/report/codecharta/codecharta-java_Report.cc.json")).exists();
     }
 
 }

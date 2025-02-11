@@ -63,6 +63,11 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.buschmais.jqassistant.plugin</groupId>
+            <artifactId>java</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
@@ -76,6 +81,12 @@
         <dependency>
             <groupId>com.buschmais.jqassistant.core</groupId>
             <artifactId>test</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.buschmais.jqassistant.plugin</groupId>
+            <artifactId>java</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>

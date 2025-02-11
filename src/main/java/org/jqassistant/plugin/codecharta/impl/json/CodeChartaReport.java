@@ -1,4 +1,4 @@
-package org.jqassistant.plugin.codecharta.impl.model;
+package org.jqassistant.plugin.codecharta.impl.json;
 
 import java.util.List;
 

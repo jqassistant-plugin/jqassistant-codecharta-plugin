@@ -12,16 +12,19 @@ import com.buschmais.jqassistant.core.report.api.model.Column;
 import com.buschmais.jqassistant.core.report.api.model.Result;
 import com.buschmais.jqassistant.core.report.api.model.Row;
 import com.buschmais.jqassistant.core.rule.api.model.ExecutableRule;
+import com.buschmais.xo.neo4j.api.model.Neo4jNode;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.jqassistant.plugin.codecharta.impl.model.CodeChartaReport;
-import org.jqassistant.plugin.codecharta.impl.model.Node;
+import org.jqassistant.plugin.codecharta.impl.json.CodeChartaReport;
+import org.jqassistant.plugin.codecharta.impl.json.Node;
+import org.jqassistant.plugin.codecharta.impl.model.MetricsDescriptor;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static java.util.Collections.emptyMap;
-import static org.jqassistant.plugin.codecharta.impl.model.Node.Type.FILE;
-import static org.jqassistant.plugin.codecharta.impl.model.Node.Type.FOLDER;
+import static java.util.stream.Collectors.toMap;
+import static org.jqassistant.plugin.codecharta.impl.json.Node.Type.FILE;
+import static org.jqassistant.plugin.codecharta.impl.json.Node.Type.FOLDER;
 
 @Slf4j
 public class CodeChartaReportPlugin implements ReportPlugin {
@@ -30,10 +33,10 @@ public class CodeChartaReportPlugin implements ReportPlugin {
 
     public static final String CC_FILE_EXTENSION = ".cc.json";
 
-    public static final String COLUMN_ELEMENT = "element";
-    public static final String COLUMN_METRICS = "metrics";
-    public static final String COLUMN_PARENT = "parent";
-    public static final String COLUMN_ELEMENT_LABEL = "elementLabel";
+    public static final String COLUMN_ELEMENT = "Element";
+    public static final String COLUMN_METRICS = "Metrics";
+    public static final String COLUMN_PARENT = "Parent";
+    public static final String COLUMN_ELEMENT_LABEL = "ElementLabel";
 
     private ObjectMapper objectMapper;
 
@@ -62,7 +65,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
 
         List<Node> nodes = toNodes(roots, metricsByElement, tree, labels);
 
-        writeReport(result, nodes);
+        writeReport(result.getRule(), nodes);
     }
 
     private static Map<String, Map<String, Number>> getMetricsByElement(Result<? extends ExecutableRule> result) throws ReportException {
@@ -71,13 +74,27 @@ public class CodeChartaReportPlugin implements ReportPlugin {
             Map<String, Column<?>> columns = row.getColumns();
             Column<?> elementColumn = requireColumn(columns, COLUMN_ELEMENT);
             Column<Map<String, Number>> metricsColumn = requireColumn(columns, COLUMN_METRICS);
-            metricsByElement.put(elementColumn.getLabel(), metricsColumn.getValue());
+            Object value = metricsColumn.getValue();
+            if (value instanceof Map) {
+                metricsByElement.put(elementColumn.getLabel(), getMetricsFromColumValue((Map<?, ?>) value));
+            } else if (value instanceof MetricsDescriptor) {
+                MetricsDescriptor metricsDescriptor = (MetricsDescriptor) value;
+                Neo4jNode<?, ?, ?, ?> neo4jNode = metricsDescriptor.getDelegate();
+                metricsByElement.put(elementColumn.getLabel(), getMetricsFromColumValue(neo4jNode.getProperties()));
+            }
         }
         return metricsByElement;
     }
 
+    private static Map<String, Number> getMetricsFromColumValue(Map<?, ?> container) {
+        return container.entrySet()
+            .stream()
+            .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof Number)
+            .collect(toMap(entry -> ((String) entry.getKey()), entry -> ((Number) entry.getValue())));
+    }
+
     private static void calculateTree(Result<? extends ExecutableRule> result, Map<String, SortedSet<String>> tree, SortedSet<String> roots,
-            Map<String, String> labels) throws ReportException {
+        Map<String, String> labels) throws ReportException {
         for (Row row : result.getRows()) {
             Column<?> elementColumn = requireColumn(row.getColumns(), COLUMN_ELEMENT);
             Column<?> parentColumn = requireColumn(row.getColumns(), COLUMN_PARENT);
@@ -85,12 +102,12 @@ public class CodeChartaReportPlugin implements ReportPlugin {
             String parent = parentColumn.getLabel();
             if (parentColumn.getValue() != null) {
                 tree.computeIfAbsent(parent, key -> new TreeSet<>())
-                        .add(element);
+                    .add(element);
             } else {
                 roots.add(element);
             }
             Column<?> labelColumn = row.getColumns()
-                    .get(COLUMN_ELEMENT_LABEL);
+                .get(COLUMN_ELEMENT_LABEL);
             if (labelColumn.getValue() != null) {
                 labels.put(element, labelColumn.getLabel());
             }
@@ -106,37 +123,44 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     }
 
     private static List<Node> toNodes(Collection<String> elements, Map<String, Map<String, Number>> metricsByFileDescriptor,
-            Map<String, SortedSet<String>> tree, Map<String, String> labels) {
+        Map<String, SortedSet<String>> tree, Map<String, String> labels) {
         List<Node> nodes = new ArrayList<>();
         if (elements != null) {
             for (String element : elements) {
                 Map<String, Number> metrics = metricsByFileDescriptor.getOrDefault(element, emptyMap());
                 List<Node> children = toNodes(tree.get(element), metricsByFileDescriptor, tree, labels);
                 nodes.add(Node.builder()
-                        .name(labels.getOrDefault(element, element))
-                        .type(tree.containsKey(element) ? FOLDER : FILE)
-                        .attributes(metrics)
-                        .children(children)
-                        .build());
+                    .name(labels.getOrDefault(element, element))
+                    .type(tree.containsKey(element) ? FOLDER : FILE)
+                    .attributes(metrics)
+                    .children(children)
+                    .build());
             }
         }
         return nodes;
     }
 
-    private void writeReport(Result<? extends ExecutableRule> result, List<Node> nodes) throws ReportException {
+    private void writeReport(ExecutableRule<?> rule, List<Node> nodes) throws ReportException {
+        Node rootNode = Node.builder()
+            .name("")
+            .type(FOLDER)
+            .attributes(emptyMap())
+            .children(nodes)
+            .build();
+
         CodeChartaReport codeChartaReport = CodeChartaReport.builder()
-                .projectName("jQAssistant CodeCharta Report")
-                .apiVersion("1.1")
-                .nodes(nodes)
-                .build();
+            .projectName("jQAssistant CodeCharta Report")
+            .apiVersion("1.1")
+            .nodes(List.of(rootNode))
+            .build();
 
         File reportDirectory = reportContext.getReportDirectory(CC_REPORT_DIRECTORY);
-        String reportFileName = ReportHelper.escapeRuleId(result.getRule()) + CC_FILE_EXTENSION;
+        String reportFileName = ReportHelper.escapeRuleId(rule) + CC_FILE_EXTENSION;
         File reportFile = new File(reportDirectory, reportFileName);
         try {
             objectMapper.writeValue(reportFile, codeChartaReport);
-            reportContext.addReport("CodeCharta", result.getRule(), ReportContext.ReportType.LINK, reportFile.toURI()
-                    .toURL());
+            reportContext.addReport("CodeCharta", rule, ReportContext.ReportType.LINK, reportFile.toURI()
+                .toURL());
         } catch (IOException e) {
             throw new ReportException("Cannot create CodeCharta report file " + reportFile, e);
         }
