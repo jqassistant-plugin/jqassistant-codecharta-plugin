@@ -47,6 +47,10 @@
         <tag>HEAD</tag>
     </scm>
 
+    <properties>
+        <sonar.projectKey>jqassistant-plugin_jqassistant-codecharta-plugin</sonar.projectKey>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.buschmais.jqassistant.core</groupId>
