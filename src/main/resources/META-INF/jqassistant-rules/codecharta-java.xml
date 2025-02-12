@@ -41,14 +41,18 @@
         <description>Creates a CodeCharta report for Java types.</description>
         <cypher><![CDATA[
             MATCH
-              (:Artifact)-[:CONTAINS]->(element:Java)
-            WHERE
-              (element:Type or element:Package)
-              and not element:Generated
+              (type:Java:Type)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics),
+              tree = shortestPath((root:Java:Package)-[:CONTAINS*]->(type))
+            WHERE NOT (
+              type:Generated
+              or (:Package)-[:CONTAINS]->(root)
+            )
+            WITH
+              nodes(tree) as elements, metrics
+            UNWIND
+              elements as element
             OPTIONAL MATCH
               (parent:Package)-[:CONTAINS]->(element)
-            OPTIONAL MATCH
-              (element:Type)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics)
             RETURN
               element AS Element, element.name AS ElementLabel, parent AS Parent, metrics AS Metrics
             ]]></cypher>

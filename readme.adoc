@@ -2,52 +2,46 @@
 
 This is the https://codecharta.com//[CodeCharta^] plugin for https://jqassistant.org[jQAssistant^].
 
-It provides the capability to export `cc.json` reports to visualize code structures and metrics in CodeCharta
+image:codecharta.png[]
 
-
+It provides the capability to export `cc.json` reports to visualize code structures and metrics in CodeCharta.
 
 For more information on jQAssistant see https://jqassistant.org[^].
 
-== Using the jqassistant-codecharta-plugin
+== Usage
 
 === Configuration
 
-[source, yaml]
+Create a file `.jqassistant.yml` (or extend an existing one) and declare the CodeCharta plugin and the report to execute during `analyze`:
+
+[source,yaml]
 ..jqassistant.yml
+
 ----
 jqassistant:
   plugins:
-    - group-id: org.jqassistant.plugin <1>
+    - group-id: org.jqassistant.plugin  #(1)
       artifact-id: jqassistant-codecharta-plugin
-      version: ${jqassistant.codecharta-plugin.version} # (1)
+      version: ${jqassistant.codecharta-plugin.version}
+  analyze:
+    concepts:
+      - codecharta-java:Report #(2)
 ----
-<1> Dependency to the CodeCharta plugin
+<1> Declaration of the jQAssistant CodeCharta plugin
+<2> Activation of the CodeCharta report for Java projects
 
-=== Rule
+== Maven
 
-.jqassistant/rules.xml
-[source,xml]
-.Rule using CodeCharta report
+If jQAssistant integrated in your project including scan and analyue goals then just run:
+
 ----
-<jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.2"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
-    <concept id="codecharta-test:Report">
-        <description>Creates a CodeCharta JSON report.</description>
-        <cypher><![CDATA[
-            MATCH
-              (root:Directory)-[:CONTAINS*]->(element:File)
-            WHERE
-              not (:Directory)-[:CONTAINS]->(root)
-            WITH
-              element, split(element.fileName, "/") as pathSegments
-            OPTIONAL MATCH
-              (root)-[:CONTAINS]->(parent:Directory)-[:CONTAINS]->(element)
-            RETURN
-              element, pathSegments[size(pathSegments)-1] as elementLabel, parent, { length: size(element.fileName) } AS metrics
-            ]]></cypher>
-        <report type="codecharta"/> <!--1-->
-    </concept>
-</jqassistant-rules>
+mvn verify -DskipTests
 ----
-<1> The report declaration
+
+Otherwise build the project and execute the goals ofjQAssistant Maven plugin directly:
+
+----
+mvn test-compile com.buschmais.jqassistant:jqassistant-maven-plugin:scan com.buschmais.jqassistant:jqassistant-maven-plugin:analyze
+----
+
+After successful execution the folder `target/jqassistant/report/codecharta` contains a file `codecharta-java_Report.cc.json` which can be imported into the CodeCharta visualization.
