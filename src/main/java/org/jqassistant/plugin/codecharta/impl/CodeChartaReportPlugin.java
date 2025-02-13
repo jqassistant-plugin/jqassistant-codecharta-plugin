@@ -29,14 +29,21 @@ import static org.jqassistant.plugin.codecharta.impl.json.Node.Type.FOLDER;
 @Slf4j
 public class CodeChartaReportPlugin implements ReportPlugin {
 
-    public static final String CC_REPORT_DIRECTORY = "codecharta";
-
-    public static final String CC_FILE_EXTENSION = ".cc.json";
+    /**
+     * The label of the report to be used, e.g. in generated Asciioc documents.
+     */
+    public static final String REPORT_LABEL = "CodeCharta";
 
     public static final String COLUMN_ELEMENT = "Element";
     public static final String COLUMN_METRICS = "Metrics";
     public static final String COLUMN_PARENT = "Parent";
     public static final String COLUMN_ELEMENT_LABEL = "ElementLabel";
+
+    public static final String CC_REPORT_DIRECTORY = "codecharta";
+    public static final String CC_FILE_EXTENSION = ".cc.json";
+
+    public static final String CC_API_VERSION = "1.1";
+    public static final String CC_PROJECT_NAME = "jQAssistant CodeCharta Report";
 
     private ObjectMapper objectMapper;
 
@@ -56,6 +63,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
 
     @Override
     public void setResult(Result<? extends ExecutableRule> result) throws ReportException {
+        log.info("Evaluating result");
         Map<String, Map<String, Number>> metricsByElement = getMetricsByElement(result);
 
         SortedSet<String> roots = new TreeSet<>();
@@ -122,13 +130,26 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         return column;
     }
 
-    private static List<Node> toNodes(Collection<String> elements, Map<String, Map<String, Number>> metricsByFileDescriptor,
-        Map<String, SortedSet<String>> tree, Map<String, String> labels) {
+    /**
+     * Convert a collection of elements to CodeCharta {@link Node}s with metrics and children
+     *
+     * @param elements
+     *     The elements.
+     * @param metricsByElement
+     *     A {@link Map} containing elements as keys and associated metrics as values (represented by a {@link Map}).
+     * @param tree
+     *     A {@link Map} containing elements as keys their children as values.
+     * @param labels
+     *     A {@link Map} containing elements as keys and their labels as values (optional).
+     * @return The CodeCharta {@link Node}s as tree structure.
+     */
+    private static List<Node> toNodes(Collection<String> elements, Map<String, Map<String, Number>> metricsByElement, Map<String, SortedSet<String>> tree,
+        Map<String, String> labels) {
         List<Node> nodes = new ArrayList<>();
         if (elements != null) {
             for (String element : elements) {
-                Map<String, Number> metrics = metricsByFileDescriptor.getOrDefault(element, emptyMap());
-                List<Node> children = toNodes(tree.get(element), metricsByFileDescriptor, tree, labels);
+                Map<String, Number> metrics = metricsByElement.getOrDefault(element, emptyMap());
+                List<Node> children = toNodes(tree.get(element), metricsByElement, tree, labels);
                 nodes.add(Node.builder()
                     .name(labels.getOrDefault(element, element))
                     .type(tree.containsKey(element) ? FOLDER : FILE)
@@ -140,6 +161,16 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         return nodes;
     }
 
+    /**
+     * Write the CodeCharta {@link Node}s to a json.cc report file.
+     *
+     * @param rule
+     *     The rule which has been used to create the report.
+     * @param nodes
+     *     The {@link Node}s.
+     * @throws ReportException
+     *     If writing fails.
+     */
     private void writeReport(ExecutableRule<?> rule, List<Node> nodes) throws ReportException {
         Node rootNode = Node.builder()
             .name("")
@@ -149,8 +180,8 @@ public class CodeChartaReportPlugin implements ReportPlugin {
             .build();
 
         CodeChartaReport codeChartaReport = CodeChartaReport.builder()
-            .projectName("jQAssistant CodeCharta Report")
-            .apiVersion("1.1")
+            .projectName(CC_PROJECT_NAME)
+            .apiVersion(CC_API_VERSION)
             .nodes(List.of(rootNode))
             .build();
 
@@ -159,7 +190,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         File reportFile = new File(reportDirectory, reportFileName);
         try {
             objectMapper.writeValue(reportFile, codeChartaReport);
-            reportContext.addReport("CodeCharta", rule, ReportContext.ReportType.LINK, reportFile.toURI()
+            reportContext.addReport(REPORT_LABEL, rule, ReportContext.ReportType.LINK, reportFile.toURI()
                 .toURL());
         } catch (IOException e) {
             throw new ReportException("Cannot create CodeCharta report file " + reportFile, e);

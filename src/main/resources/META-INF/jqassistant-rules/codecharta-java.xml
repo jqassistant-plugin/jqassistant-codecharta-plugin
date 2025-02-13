@@ -45,12 +45,14 @@
               tree = shortestPath((root:Java:Package)-[:CONTAINS*]->(type))
             WHERE NOT (
               type:Generated
-              or (:Package)-[:CONTAINS]->(root)
+              or (:Package)-[:CONTAINS]->(root) // identify the root package
             )
             WITH
               nodes(tree) as elements, metrics
             UNWIND
-              elements as element
+              elements as element // filter out duplicate packages
+            WITH
+              distinct element, metrics
             OPTIONAL MATCH
               (parent:Package)-[:CONTAINS]->(element)
             RETURN
