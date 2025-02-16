@@ -6,13 +6,11 @@
         <description>Assigns metrics to code elements.</description>
         <cypher><![CDATA[
             MATCH
-              (element)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics)
-            WITH
-              element, keys(metrics) AS metrics
+              (metrics:CodeCharta:Metrics)
             UNWIND
-              metrics AS metric
+              keys(metrics) AS key
             RETURN
-              count(element) AS Elements, collect(DISTINCT metric) AS Metrics
+              count(metrics) AS Elements, collect(DISTINCT key) AS Keys
             ]]></cypher>
         <verify>
             <aggregation/>

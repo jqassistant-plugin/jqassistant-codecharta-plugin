@@ -2,11 +2,10 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
-    <concept id="codecharta-java:TypeMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
+    <concept id="codecharta-java:MetricsAggregateTypes">
         <requiresConcept refId="java:GeneratedType"/>
-        <requiresConcept refId="java:AnonymousInnerType"/>
-        <description>Provides LoC, CC, FanIn and FanOut of Java types including their inner classes as `(:Type)-[:HAS_METRICS]->(:Metrics)`.</description>
+        <requiresConcept refId="java:InnerType"/>
+        <description>Provides empty node and edge metrics for Java types aggregating the types including their inner types.</description>
         <cypher><![CDATA[
             MATCH
               (:Artifact)-[:CONTAINS]->(outerType:Java:Type)
@@ -18,24 +17,79 @@
               (outerType)-[:DECLARES0*0..]->(type:Type)
             WHERE NOT
               type:Generated
+            MERGE
+              (outerType)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+            MERGE
+              (nodeMetrics)-[:AGGREGATES]->(type)
+            MERGE
+              (outerType)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)
+            MERGE
+              (edgeMetrics)-[:AGGREGATES]->(type)
+            RETURN
+              count(type) AS Elements
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:TypeNodeMetrics">
+        <providesConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta-java:MetricsAggregateTypes"/>
+        <description>Provides LoC and CC node metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type)
             OPTIONAL MATCH
               (type)-[:DECLARES]->(method:Method)
             WITH
-              outerType, type, sum(method.effectiveLineCount) AS loc, sum(method.cyclomaticComplexity) AS cc
+              type, nodeMetrics, sum(method.effectiveLineCount) AS loc, sum(method.cyclomaticComplexity) AS cc
+            SET
+              nodeMetrics += { loc: loc, cc: cc }
+            RETURN
+              count(nodeMetrics) AS Elements
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:TypeFanInMetrics">
+        <providesConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta-java:MetricsAggregateTypes"/>
+        <description>Provides FanIn node and edge metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type)
             OPTIONAL MATCH
               (:Artifact)-[:CONTAINS]->(dependent:Type)-[:DEPENDS_ON]->(type)
             WITH
-              outerType, type, loc, cc, count(dependent) AS fanIn
+              type, nodeMetrics, count(dependent) AS fanIn
+            SET
+              nodeMetrics += { fanIn: fanIn }
+            RETURN
+              count(nodeMetrics) AS Elements
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:TypeFanOutMetrics">
+        <providesConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta-java:MetricsAggregateTypes"/>
+        <description>Provides FanOut node and edge metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type)
             OPTIONAL MATCH
               (type)-[:DEPENDS_ON]->(dependency:Type)<-[:CONTAINS]-(:Artifact)
             WITH
-              outerType, type, loc, cc, fanIn, count(dependency) AS fanOut
-            MERGE
-              (outerType)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics)
+              type, nodeMetrics, count(dependency) AS fanOut
             SET
-              metrics = {loc: loc, cc: cc, fanIn: fanIn, fanOut: fanOut}
+              nodeMetrics += { fanOut: fanOut }
             RETURN
-              count(type) AS Elements
+              count(nodeMetrics) AS Elements
             ]]></cypher>
         <verify>
             <aggregation/>
@@ -63,7 +117,7 @@
             OPTIONAL MATCH
               (parent:Package)-[:CONTAINS]->(element)
             OPTIONAL MATCH
-              (element)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics)
+              (element)-[:HAS_METRICS]->(metrics:CodeCharta:Node:Metrics)
             RETURN
               element AS Element, element.name AS ElementLabel, parent AS Parent, metrics AS Metrics
             ]]></cypher>
