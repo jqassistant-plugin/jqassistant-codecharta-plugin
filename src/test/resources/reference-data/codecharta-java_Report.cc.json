@@ -42,9 +42,9 @@
                                   "type": "File",
                                   "attributes": {
                                     "cc": 3,
-                                    "loc": 4,
                                     "fanIn": 0,
-                                    "fanOut": 1
+                                    "fanOut": 1,
+                                    "loc": 4
                                   },
                                   "children": []
                                 },
@@ -53,9 +53,9 @@
                                   "type": "File",
                                   "attributes": {
                                     "cc": 0,
-                                    "loc": 0,
                                     "fanIn": 0,
-                                    "fanOut": 0
+                                    "fanOut": 0,
+                                    "loc": 0
                                   },
                                   "children": []
                                 }

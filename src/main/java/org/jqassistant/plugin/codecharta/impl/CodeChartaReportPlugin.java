@@ -22,7 +22,7 @@ import org.jqassistant.plugin.codecharta.impl.model.MetricsDescriptor;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static java.util.Collections.emptyMap;
-import static java.util.stream.Collectors.toMap;
+import static java.util.Collections.emptySortedMap;
 import static org.jqassistant.plugin.codecharta.impl.json.Node.Type.FILE;
 import static org.jqassistant.plugin.codecharta.impl.json.Node.Type.FOLDER;
 
@@ -64,7 +64,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     @Override
     public void setResult(Result<? extends ExecutableRule> result) throws ReportException {
         log.info("Evaluating result");
-        Map<String, Map<String, Number>> metricsByElement = getMetricsByElement(result);
+        Map<String, SortedMap<String, Number>> metricsByElement = getMetricsByElement(result);
 
         SortedSet<String> roots = new TreeSet<>();
         Map<String, SortedSet<String>> tree = new HashMap<>();
@@ -76,8 +76,8 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         writeReport(result.getRule(), nodes);
     }
 
-    private static Map<String, Map<String, Number>> getMetricsByElement(Result<? extends ExecutableRule> result) throws ReportException {
-        Map<String, Map<String, Number>> metricsByElement = new HashMap<>();
+    private static Map<String, SortedMap<String, Number>> getMetricsByElement(Result<? extends ExecutableRule> result) throws ReportException {
+        Map<String, SortedMap<String, Number>> metricsByElement = new HashMap<>();
         for (Row row : result.getRows()) {
             Map<String, Column<?>> columns = row.getColumns();
             Column<?> elementColumn = requireColumn(columns, COLUMN_ELEMENT);
@@ -94,11 +94,13 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         return metricsByElement;
     }
 
-    private static Map<String, Number> getMetricsFromColumValue(Map<?, ?> container) {
-        return container.entrySet()
+    private static SortedMap<String, Number> getMetricsFromColumValue(Map<?, ?> container) {
+        TreeMap<String, Number> metrics = new TreeMap<>();
+        container.entrySet()
             .stream()
             .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof Number)
-            .collect(toMap(entry -> ((String) entry.getKey()), entry -> ((Number) entry.getValue())));
+            .forEach(entry -> metrics.put((String) entry.getKey(), (Number) entry.getValue()));
+        return metrics;
     }
 
     private static void calculateTree(Result<? extends ExecutableRule> result, Map<String, SortedSet<String>> tree, SortedSet<String> roots,
@@ -143,12 +145,12 @@ public class CodeChartaReportPlugin implements ReportPlugin {
      *     A {@link Map} containing elements as keys and their labels as values (optional).
      * @return The CodeCharta {@link Node}s as tree structure.
      */
-    private static List<Node> toNodes(Collection<String> elements, Map<String, Map<String, Number>> metricsByElement, Map<String, SortedSet<String>> tree,
+    private static List<Node> toNodes(Collection<String> elements, Map<String, SortedMap<String, Number>> metricsByElement, Map<String, SortedSet<String>> tree,
         Map<String, String> labels) {
         List<Node> nodes = new ArrayList<>();
         if (elements != null) {
             for (String element : elements) {
-                Map<String, Number> metrics = metricsByElement.getOrDefault(element, emptyMap());
+                Map<String, Number> metrics = metricsByElement.getOrDefault(element, emptySortedMap());
                 List<Node> children = toNodes(tree.get(element), metricsByElement, tree, labels);
                 nodes.add(Node.builder()
                     .name(labels.getOrDefault(element, element))
