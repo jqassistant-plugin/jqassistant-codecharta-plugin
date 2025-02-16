@@ -1,0 +1,77 @@
+{
+  "projectName": "jQAssistant CodeCharta Report",
+  "apiVersion": "1.1",
+  "nodes": [
+    {
+      "name": "",
+      "type": "Folder",
+      "attributes": {},
+      "children": [
+        {
+          "name": "org",
+          "type": "Folder",
+          "attributes": {},
+          "children": [
+            {
+              "name": "jqassistant",
+              "type": "Folder",
+              "attributes": {},
+              "children": [
+                {
+                  "name": "plugin",
+                  "type": "Folder",
+                  "attributes": {},
+                  "children": [
+                    {
+                      "name": "codecharta",
+                      "type": "Folder",
+                      "attributes": {},
+                      "children": [
+                        {
+                          "name": "it",
+                          "type": "Folder",
+                          "attributes": {},
+                          "children": [
+                            {
+                              "name": "set",
+                              "type": "Folder",
+                              "attributes": {},
+                              "children": [
+                                {
+                                  "name": "TestClass",
+                                  "type": "File",
+                                  "attributes": {
+                                    "cc": 3,
+                                    "loc": 4,
+                                    "fanIn": 0,
+                                    "fanOut": 1
+                                  },
+                                  "children": []
+                                },
+                                {
+                                  "name": "TestInterface",
+                                  "type": "File",
+                                  "attributes": {
+                                    "cc": 0,
+                                    "loc": 0,
+                                    "fanIn": 0,
+                                    "fanOut": 0
+                                  },
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

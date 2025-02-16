@@ -5,26 +5,33 @@
     <concept id="codecharta-java:TypeMetrics">
         <providesConcept refId="codecharta:Metrics"/>
         <requiresConcept refId="java:GeneratedType"/>
-        <description>Provides LoC, CC, FanIn and FanOut of Java Types as :Metrics.</description>
+        <requiresConcept refId="java:AnonymousInnerType"/>
+        <description>Provides LoC, CC, FanIn and FanOut of Java types including their inner classes as `(:Type)-[:HAS_METRICS]->(:Metrics)`.</description>
         <cypher><![CDATA[
             MATCH
-              (:Artifact)-[:CONTAINS]->(type:Java:Type)
+              (:Artifact)-[:CONTAINS]->(outerType:Java:Type)
+            WHERE NOT
+              outerType:Inner
+            WITH
+              outerType as outerType
+            MATCH
+              (outerType)-[:DECLARES0*0..]->(type:Type)
             WHERE NOT
               type:Generated
             OPTIONAL MATCH
               (type)-[:DECLARES]->(method:Method)
             WITH
-              type, sum(method.effectiveLineCount) AS loc, sum(method.cyclomaticComplexity) AS cc
+              outerType, type, sum(method.effectiveLineCount) AS loc, sum(method.cyclomaticComplexity) AS cc
             OPTIONAL MATCH
-              (dependent:Type)-[:DEPENDS_ON]->(type)
+              (:Artifact)-[:CONTAINS]->(dependent:Type)-[:DEPENDS_ON]->(type)
             WITH
-              type, loc, cc, count(dependent) AS fanIn
+              outerType, type, loc, cc, count(dependent) AS fanIn
             OPTIONAL MATCH
-              (type)-[:DEPENDS_ON]->(dependency:Type)
+              (type)-[:DEPENDS_ON]->(dependency:Type)<-[:CONTAINS]-(:Artifact)
             WITH
-              type, loc, cc, fanIn, count(dependency) AS fanOut
+              outerType, type, loc, cc, fanIn, count(dependency) AS fanOut
             MERGE
-              (type)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics)
+              (outerType)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics)
             SET
               metrics = {loc: loc, cc: cc, fanIn: fanIn, fanOut: fanOut}
             RETURN
@@ -41,20 +48,22 @@
         <description>Creates a CodeCharta report for Java types.</description>
         <cypher><![CDATA[
             MATCH
-              (type:Java:Type)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics),
-              tree = shortestPath((root:Java:Package)-[:CONTAINS*]->(type))
+              (element:Java)-[:HAS_METRICS]->(:CodeCharta:Metrics),
+              tree = shortestPath((root:Java:Package)-[:CONTAINS*]->(element))
             WHERE NOT (
-              type:Generated
+              element:Generated
               or (:Package)-[:CONTAINS]->(root) // identify the root package
             )
             WITH
-              nodes(tree) as elements, metrics
+              nodes(tree) as elements
             UNWIND
               elements as element // filter out duplicate packages
             WITH
-              distinct element, metrics
+              distinct element
             OPTIONAL MATCH
               (parent:Package)-[:CONTAINS]->(element)
+            OPTIONAL MATCH
+              (element)-[:HAS_METRICS]->(metrics:CodeCharta:Metrics)
             RETURN
               element AS Element, element.name AS ElementLabel, parent AS Parent, metrics AS Metrics
             ]]></cypher>
