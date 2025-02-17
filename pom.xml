@@ -49,7 +49,7 @@
 
     <properties>
         <sonar.projectKey>jqassistant-plugin_jqassistant-codecharta-plugin</sonar.projectKey>
-        <model-assert.version>1.0.3</model-assert.version>
+        <model-assert.version>1.1.0</model-assert.version>
     </properties>
 
     <dependencies>
