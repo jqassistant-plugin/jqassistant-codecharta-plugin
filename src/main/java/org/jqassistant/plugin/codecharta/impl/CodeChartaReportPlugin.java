@@ -34,16 +34,16 @@ public class CodeChartaReportPlugin implements ReportPlugin {
      */
     public static final String REPORT_LABEL = "CodeCharta";
 
-    public static final String COLUMN_ELEMENT = "Element";
+    public static final String COLUMN_NODE = "Node";
+    public static final String COLUMN_NODE_LABEL = "NodeLabel";
+    public static final String COLUMN_PARENT_NODE = "ParentNode";
     public static final String COLUMN_NODE_METRICS = "NodeMetrics";
     public static final String COLUMN_EDGE_METRICS = "EdgeMetrics";
-    public static final String COLUMN_PARENT = "Parent";
-    public static final String COLUMN_ELEMENT_LABEL = "ElementLabel";
 
     public static final String CC_REPORT_DIRECTORY = "codecharta";
     public static final String CC_FILE_EXTENSION = ".cc.json";
 
-    public static final String CC_API_VERSION = "1.1";
+    public static final String CC_API_VERSION = "1.2";
     public static final String CC_PROJECT_NAME = "jQAssistant CodeCharta Report";
 
     private ObjectMapper objectMapper;
@@ -83,7 +83,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     private static SortedMap<String, String> calculatePaths(SortedSet<String> roots, Map<String, SortedSet<String>> tree, Map<String, String> labels) {
         TreeMap<String, String> paths = new TreeMap<>();
         for (String nodeKey : roots) {
-            calculatePath("", nodeKey, paths, tree, labels);
+            calculatePath("/", nodeKey, paths, tree, labels);
         }
         return paths;
     }
@@ -102,7 +102,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         Map<String, SortedMap<String, Number>> nodeMetrics = new HashMap<>();
         for (Row row : result.getRows()) {
             Map<String, Column<?>> columns = row.getColumns();
-            Column<?> elementColumn = requireColumn(columns, COLUMN_ELEMENT);
+            Column<?> elementColumn = requireColumn(columns, COLUMN_NODE);
             String elementKey = elementColumn.getLabel();
             Column<Map<String, Number>> nodeMetricsColumn = requireColumn(columns, COLUMN_NODE_METRICS);
             Object value = nodeMetricsColumn.getValue();
@@ -117,7 +117,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = new HashMap<>();
         for (Row row : result.getRows()) {
             Map<String, Column<?>> columns = row.getColumns();
-            Column<?> nodeColumn = requireColumn(columns, COLUMN_ELEMENT);
+            Column<?> nodeColumn = requireColumn(columns, COLUMN_NODE);
             String nodeKey = nodeColumn.getLabel();
             Column<List<Map<String, Object>>> edgeMetricsColumn = requireColumn(columns, COLUMN_EDGE_METRICS);
             List<Map<String, Object>> value = edgeMetricsColumn.getValue();
@@ -160,8 +160,8 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     private static void calculateTree(Result<? extends ExecutableRule> result, Map<String, SortedSet<String>> tree, SortedSet<String> roots,
         Map<String, String> labels) throws ReportException {
         for (Row row : result.getRows()) {
-            Column<?> elementColumn = requireColumn(row.getColumns(), COLUMN_ELEMENT);
-            Column<?> parentColumn = requireColumn(row.getColumns(), COLUMN_PARENT);
+            Column<?> elementColumn = requireColumn(row.getColumns(), COLUMN_NODE);
+            Column<?> parentColumn = requireColumn(row.getColumns(), COLUMN_PARENT_NODE);
             String nodeKey = elementColumn.getLabel();
             String parent = parentColumn.getLabel();
             if (parentColumn.getValue() != null) {
@@ -171,7 +171,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
                 roots.add(nodeKey);
             }
             String label = row.getColumns()
-                .get(COLUMN_ELEMENT_LABEL)
+                .get(COLUMN_NODE_LABEL)
                 .getLabel();
             labels.put(nodeKey, label != null ? label : nodeKey);
         }

@@ -1,6 +1,6 @@
 {
   "projectName": "jQAssistant CodeCharta Report",
-  "apiVersion": "1.1",
+  "apiVersion": "1.2",
   "nodes": [
     {
       "name": "",
@@ -53,7 +53,7 @@
                                   "type": "File",
                                   "attributes": {
                                     "cc": 0,
-                                    "fanIn": 0,
+                                    "fanIn": 1,
                                     "fanOut": 0,
                                     "loc": 0
                                   },
@@ -72,6 +72,15 @@
           ]
         }
       ]
+    }
+  ],
+  "edges": [
+    {
+      "fromNodeName": "//org/jqassistant/plugin/codecharta/it/set/TestClass",
+      "toNodeName": "//org/jqassistant/plugin/codecharta/it/set/TestInterface",
+      "attributes": {
+        "coupling": 1
+      }
     }
   ]
 }

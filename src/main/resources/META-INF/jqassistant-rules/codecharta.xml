@@ -3,14 +3,14 @@
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
     <concept id="codecharta:Metrics">
-        <description>Assigns metrics to code elements.</description>
+        <description>Provided Metrics.</description>
         <cypher><![CDATA[
             MATCH
               (metrics:CodeCharta:Metrics)
             UNWIND
               keys(metrics) AS key
             RETURN
-              count(metrics) AS Elements, collect(DISTINCT key) AS Keys
+              count(metrics) AS Metrics, collect(DISTINCT key) AS Keys
             ]]></cypher>
         <verify>
             <aggregation/>

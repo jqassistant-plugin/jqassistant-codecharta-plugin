@@ -19,7 +19,6 @@ For more information on jQAssistant see https://jqassistant.org[^].
 
 [source,yaml]
 ..jqassistant.yml
-
 ----
 jqassistant:
   plugins:
@@ -28,7 +27,7 @@ jqassistant:
       version: ${jqassistant.codecharta-plugin.version}
   analyze:
     concepts:
-      - codecharta-java:Report #(2)
+      - codecharta-java:TypeReport #(2)
 ----
 <1> Declaration of the jQAssistant CodeCharta plugin
 <2> Activation of the CodeCharta report for Java projects
@@ -49,7 +48,7 @@ mvn test-compile com.buschmais.jqassistant:jqassistant-maven-plugin:scan com.bus
 
 TIP: In situations where Maven modules make use of extensions there might be a problem during scan ("Unable to obtain lock on file: <path>/target/jqassistant/store/data/databases/store_lock"). In this case add the parameter `-Djqassistant.maven.reuse-store=false` to the commandline and run again.
 
-After successful execution the folder `target/jqassistant/report/codecharta` contains a file `codecharta-java_Report.cc.json` which can be imported into the CodeCharta visualization.
+After successful execution the folder `target/jqassistant/report/codecharta` contains a file `codecharta-java_TypeReport.cc.json` which can be imported into the CodeCharta visualization.
 
 === CLI
 
@@ -60,7 +59,7 @@ jqassistant-commandline-neo4jv5-<version>/bin/jqassistant.sh scan -f my-war-file
 jqassistant-commandline-neo4jv5-<version>/bin/jqassistant.sh analyze
 ----
 
-The folder `jqassistant/report/codecharta` contains a file `codecharta-java_Report.cc.json` to be imported into the CodeCharta visualization.
+The folder `jqassistant/report/codecharta` contains a file `codecharta-java_TypeReport.cc.json` to be imported into the CodeCharta visualization.
 
 == Issues & Questions
 

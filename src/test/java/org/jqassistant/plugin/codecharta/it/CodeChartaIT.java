@@ -31,9 +31,9 @@ class CodeChartaIT extends AbstractJavaPluginIT {
         File classesDirectory = getClassesDirectory(CodeChartaIT.class);
         scanClassPathDirectory(classesDirectory);
 
-        applyConcept("codecharta-java:Report");
+        applyConcept("codecharta-java:TypeReport");
 
-        verify("codecharta-java_Report.cc.json");
+        verify("codecharta-java_TypeReport.cc.json");
     }
 
     private void verify(String reportFileName) throws IOException {
