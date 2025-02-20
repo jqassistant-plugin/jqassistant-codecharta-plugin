@@ -2,6 +2,7 @@ package org.jqassistant.plugin.codecharta.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 
 import com.buschmais.jqassistant.core.report.api.ReportContext;
@@ -11,6 +12,7 @@ import com.buschmais.jqassistant.core.report.api.ReportPlugin;
 import com.buschmais.jqassistant.core.report.api.model.Column;
 import com.buschmais.jqassistant.core.report.api.model.Result;
 import com.buschmais.jqassistant.core.report.api.model.Row;
+import com.buschmais.jqassistant.core.rule.api.model.Concept;
 import com.buschmais.jqassistant.core.rule.api.model.ExecutableRule;
 import com.buschmais.xo.neo4j.api.model.Neo4jNode;
 
@@ -63,8 +65,13 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     }
 
     @Override
+    public void beginConcept(Concept concept) {
+        log.info("Entering concept {}, this may take a while depending on the size of the codebase.", concept.getId());
+    }
+
+    @Override
     public void setResult(Result<? extends ExecutableRule> result) throws ReportException {
-        log.info("Evaluating result");
+        log.info("Preparing report.");
         Map<String, SortedMap<String, Number>> nodeMetrics = getNodeMetrics(result);
         Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = getEdgeMetrics(result);
 
@@ -77,7 +84,8 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         List<Node> nodes = toNodes(roots, nodeMetrics, tree, labels);
         List<Edge> edges = toEdges(edgeMetrics, paths);
 
-        writeReport(result.getRule(), nodes, edges);
+        File reportFile = writeReport(result.getRule(), nodes, edges);
+        log.info("Created CodeCharta report '{}'.", reportFile);
     }
 
     private static SortedMap<String, String> calculatePaths(SortedSet<String> roots, Map<String, SortedSet<String>> tree, Map<String, String> labels) {
@@ -224,9 +232,11 @@ public class CodeChartaReportPlugin implements ReportPlugin {
                 .entrySet()) {
                 String toNodeKey = toNodeEntry.getKey();
                 SortedMap<String, Number> metrics = toNodeEntry.getValue();
+                String fromNodeName = paths.get(fromNodeKey);
+                String toNodeName = paths.get(toNodeKey);
                 Edge edge = Edge.builder()
-                    .fromNodeName(paths.get(fromNodeKey))
-                    .toNodeName(paths.get(toNodeKey))
+                    .fromNodeName(fromNodeName)
+                    .toNodeName(toNodeName)
                     .attributes(metrics)
                     .build();
                 edges.add(edge);
@@ -243,10 +253,11 @@ public class CodeChartaReportPlugin implements ReportPlugin {
      * @param nodes
      *     The {@link Node}s.
      * @param edges
+     * @return The report {@link File}
      * @throws ReportException
      *     If writing fails.
      */
-    private void writeReport(ExecutableRule<?> rule, List<Node> nodes, List<Edge> edges) throws ReportException {
+    private File writeReport(ExecutableRule<?> rule, List<Node> nodes, List<Edge> edges) throws ReportException {
         Node rootNode = Node.builder()
             .name("")
             .type(FOLDER)
@@ -266,11 +277,13 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         File reportFile = new File(reportDirectory, reportFileName);
         try {
             objectMapper.writeValue(reportFile, codeChartaReport);
-            reportContext.addReport(REPORT_LABEL, rule, ReportContext.ReportType.LINK, reportFile.toURI()
-                .toURL());
+            URL url = reportFile.toURI()
+                .toURL();
+            reportContext.addReport(REPORT_LABEL, rule, ReportContext.ReportType.LINK, url);
         } catch (IOException e) {
             throw new ReportException("Cannot create CodeCharta report file " + reportFile, e);
         }
+        return reportFile;
     }
 
 }

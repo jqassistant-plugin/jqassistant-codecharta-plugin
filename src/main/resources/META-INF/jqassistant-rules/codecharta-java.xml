@@ -102,12 +102,13 @@
         <description>Provides FanOut node and edge metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
-              (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
-              (type)-[dependsOn:DEPENDS_ON]->(dependency:Type)<-[:CONTAINS]-(:Artifact)
-            WHERE NOT
-              (nodeMetrics)-[:AGGREGATES]->(dependency)
+              (type:Type)-[:HAS_METRICS]->(fromNodeMetrics:CodeCharta:Node:Metrics),
+              (dependency:Type)-[:HAS_METRICS]->(toNodeMetrics:CodeCharta:Node:Metrics),
+              (fromNodeMetrics)-[:AGGREGATES]->(:Type)-[dependsOn:DEPENDS_ON]->(:Type)<-[:AGGREGATES]-(toNodeMetrics)
+            WHERE
+              fromNodeMetrics <> toNodeMetrics
             WITH
-              type, nodeMetrics, dependsOn.weight as coupling, dependency
+              type, sum(dependsOn.weight) as coupling, dependency
             CALL {
               WITH
                 type, coupling, dependency
