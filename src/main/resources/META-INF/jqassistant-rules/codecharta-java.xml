@@ -21,10 +21,6 @@
               (outerType)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
             MERGE
               (nodeMetrics)-[:AGGREGATES]->(type)
-            MERGE
-              (outerType)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)
-            MERGE
-              (edgeMetrics)-[:AGGREGATES]->(type)
             RETURN
               count(type) AS Elements
             ]]></cypher>
@@ -96,9 +92,32 @@
         </verify>
     </concept>
 
+    <concept id="codecharta-java:TypeCouplingMetrics">
+        <providesConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta-java:MetricsAggregateTypes"/>
+        <description>Provides FanOut node and edge metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
+              (type)-[dependsOn:DEPENDS_ON]->(dependency:Type)<-[:CONTAINS]-(:Artifact)
+            WHERE
+              type <> dependency
+            WITH
+              type, nodeMetrics, dependsOn.weight as coupling, dependency
+            MERGE
+              (type)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(dependency)
+            SET
+              edgeMetrics += { coupling: coupling }
+            RETURN
+              count(edgeMetrics) AS Elements
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
     <concept id="codecharta-java:Report">
         <requiresConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="java:GeneratedType"/>
         <description>Creates a CodeCharta report for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -117,9 +136,11 @@
             OPTIONAL MATCH
               (parent:Package)-[:CONTAINS]->(element)
             OPTIONAL MATCH
-              (element)-[:HAS_METRICS]->(metrics:CodeCharta:Node:Metrics)
+              (element)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+            OPTIONAL MATCH
+              (element)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(toElement)
             RETURN
-              element AS Element, element.name AS ElementLabel, parent AS Parent, metrics AS Metrics
+              element AS Element, element.name AS ElementLabel, parent AS Parent, nodeMetrics AS NodeMetrics, collect({to: toElement, metrics: edgeMetrics}) as EdgeMetrics
             ]]></cypher>
         <report type="codecharta"/>
     </concept>

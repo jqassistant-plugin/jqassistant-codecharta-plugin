@@ -14,4 +14,5 @@ public class CodeChartaReport {
     private String projectName;
     private String apiVersion;
     private List<Node> nodes;
+    private List<Edge> edges;
 }
