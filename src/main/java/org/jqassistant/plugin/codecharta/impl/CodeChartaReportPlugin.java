@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 
 import com.buschmais.jqassistant.core.report.api.ReportContext;
 import com.buschmais.jqassistant.core.report.api.ReportException;
@@ -66,7 +67,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
 
     @Override
     public void beginConcept(Concept concept) {
-        log.info("Entering concept {}, this may take a while depending on the size of the codebase.", concept.getId());
+        log.info("Collecting data for the CodeCharta Report, this may take some time.", concept.getId());
     }
 
     @Override
@@ -126,15 +127,15 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         for (Row row : result.getRows()) {
             Map<String, Column<?>> columns = row.getColumns();
             Column<?> nodeColumn = requireColumn(columns, COLUMN_NODE);
-            String nodeKey = nodeColumn.getLabel();
+            String fromNodeKey = nodeColumn.getLabel();
             Column<List<Map<String, Object>>> edgeMetricsColumn = requireColumn(columns, COLUMN_EDGE_METRICS);
             List<Map<String, Object>> value = edgeMetricsColumn.getValue();
             for (Map<String, Object> edgeMetricsValue : value) {
                 Object toNode = edgeMetricsValue.get("to");
-                if (toNode != null) {
-                    Object metrics = edgeMetricsValue.get("metrics");
+                Object metrics = edgeMetricsValue.get("metrics");
+                if (toNode != null && metrics != null) {
                     String toNodeKey = ReportHelper.getLabel(toNode);
-                    edgeMetrics.computeIfAbsent(nodeKey, key -> new TreeMap<>())
+                    edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
                         .put(toNodeKey, getMetricsFromValue(metrics));
                 }
             }
@@ -231,18 +232,27 @@ public class CodeChartaReportPlugin implements ReportPlugin {
             for (Map.Entry<String, SortedMap<String, Number>> toNodeEntry : fromNodeEntry.getValue()
                 .entrySet()) {
                 String toNodeKey = toNodeEntry.getKey();
-                SortedMap<String, Number> metrics = toNodeEntry.getValue();
-                String fromNodeName = paths.get(fromNodeKey);
-                String toNodeName = paths.get(toNodeKey);
-                Edge edge = Edge.builder()
-                    .fromNodeName(fromNodeName)
-                    .toNodeName(toNodeName)
-                    .attributes(metrics)
-                    .build();
-                edges.add(edge);
+                withNode(fromNodeKey, paths, fromNodeName -> withNode(toNodeKey, paths, toNodeName -> {
+                    SortedMap<String, Number> metrics = toNodeEntry.getValue();
+                    Edge edge = Edge.builder()
+                        .fromNodeName(fromNodeName)
+                        .toNodeName(toNodeName)
+                        .attributes(metrics)
+                        .build();
+                    edges.add(edge);
+                }));
             }
         }
         return edges;
+    }
+
+    private static void withNode(String nodeKey, SortedMap<String, String> paths, Consumer<String> action) {
+        String path = paths.get(nodeKey);
+        if (path == null) {
+            log.warn("Cannot resolve path from node key {}", nodeKey);
+        } else {
+            action.accept(path);
+        }
     }
 
     /**
