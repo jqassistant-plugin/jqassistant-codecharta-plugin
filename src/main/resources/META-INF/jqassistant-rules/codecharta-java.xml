@@ -53,7 +53,7 @@
     <concept id="codecharta-java:TypeFanInMetrics">
         <providesConcept refId="codecharta-java:TypeReport"/>
         <requiresConcept refId="codecharta-java:TypeMetrics"/>
-        <description>Provides FanIn node and edge metrics for Java types.</description>
+        <description>Provides FanIn node metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
               (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
@@ -61,7 +61,7 @@
             WHERE NOT
               (nodeMetrics)-[:AGGREGATES]->(dependent:Type)
             WITH
-              type, nodeMetrics, count(dependent) AS fanIn
+              nodeMetrics, count(dependent) AS fanIn
             SET
               nodeMetrics.fanIn = fanIn
             RETURN
@@ -75,7 +75,7 @@
     <concept id="codecharta-java:TypeFanOutMetrics">
         <providesConcept refId="codecharta-java:TypeReport"/>
         <requiresConcept refId="codecharta-java:TypeMetrics"/>
-        <description>Provides FanOut node and edge metrics for Java types.</description>
+        <description>Provides FanOut node metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
               (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
@@ -83,7 +83,7 @@
             WHERE NOT
               (nodeMetrics)-[:AGGREGATES]->(dependency:Type)
             WITH
-              type, nodeMetrics, count(dependency) AS fanOut
+              nodeMetrics, count(dependency) AS fanOut
             SET
               nodeMetrics.fanOut = fanOut
             RETURN
@@ -147,9 +147,9 @@
             OPTIONAL MATCH
               (node)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
             OPTIONAL MATCH
-              (node)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(toElement)
+              (node)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(toNode)
             RETURN
-              node AS Node, node.name AS NodeLabel, parentNode AS ParentNode, nodeMetrics AS NodeMetrics, collect({to: toElement, metrics: edgeMetrics}) as EdgeMetrics
+              node AS Node, node.name AS NodeLabel, parentNode AS ParentNode, nodeMetrics AS NodeMetrics, collect({to: toNode, metrics: edgeMetrics}) as EdgeMetrics
             ]]></cypher>
         <report type="codecharta"/>
     </concept>
@@ -206,16 +206,101 @@
             ]]></cypher>
     </concept>
 
+    <concept id="codecharta-java:MavenFanInMetrics">
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <description>Provides FanIn node metrics for Maven modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
+              (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Type),
+              (dependentProject:Maven:Project:Directory)-[:HAS_METRICS]->(:CodeCharta:Node:Metrics),
+              (dependentProject)-[:CREATES]->(:Artifact)-[:CONTAINS]->(dependentType:Type),
+              (type)<-[:DEPENDS_ON]-(dependentType)
+            WHERE
+              project <> dependentProject
+            WITH
+              nodeMetrics, count(dependentType) as fanIn
+            SET
+              nodeMetrics.fanIn = fanIn
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:MavenFanOutMetrics">
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <description>Provides FanOut node metrics for Maven modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
+              (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Type),
+              (dependencyProject:Maven:Project:Directory)-[:HAS_METRICS]->(:CodeCharta:Node:Metrics),
+              (dependencyProject)-[:CREATES]->(:Artifact)-[:CONTAINS]->(dependencyType:Type),
+              (type)-[:DEPENDS_ON]->(dependencyType)
+            WHERE
+              project <> dependencyProject
+            WITH
+              nodeMetrics, count(dependencyType) as fanOut
+            SET
+              nodeMetrics.fanOut = fanOut
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:MavenCouplingMetrics">
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <requiresConcept refId="codecharta-java:MavenMetrics"/>
+        <description>Provides FanOut node and edge metrics for Maven modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)-[:HAS_METRICS]->(:CodeCharta:Node:Metrics),
+              (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(dependentType:Type),
+              (dependencyProject:Maven:Project:Directory)-[:HAS_METRICS]->(:CodeCharta:Node:Metrics),
+              (dependencyProject)-[:CREATES]->(:Artifact)-[:CONTAINS]->(dependencyType:Type),
+              (dependentType)-[dependsOn:DEPENDS_ON]->(dependencyType)
+            WHERE
+              project <> dependencyProject
+            WITH
+              project, count(dependsOn) as coupling, sum(dependsOn.weight) as totalCoupling, dependencyProject
+            CALL {
+              WITH
+                project, coupling, totalCoupling, dependencyProject
+              MERGE
+                (project)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(dependencyProject)
+              SET
+                edgeMetrics.coupling = coupling
+              SET
+                edgeMetrics.totalCoupling = totalCoupling
+              RETURN
+                edgeMetrics
+            } IN TRANSACTIONS
+            RETURN
+              count(edgeMetrics) AS EdgeMetrics
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
     <concept id="codecharta-java:MavenReport">
         <providesConcept refId="codecharta:Metrics"/>
         <description>Creates a CodeCharta report for Maven modules.</description>
         <cypher><![CDATA[
             MATCH
-              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+              (node:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
             OPTIONAL MATCH
-              (project)-[:HAS_PARENT]->(parent:Maven:Project:Directory)
+              (parent:Maven:Project:Directory)-[:HAS_MODULE]->(node)
+            OPTIONAL MATCH
+              (node)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(toNode)
             RETURN
-              project AS Node, project.fqn AS NodeLabel, parent AS ParentNode, nodeMetrics as NodeMetrics
+              node AS Node, node.fqn AS NodeLabel, parent AS ParentNode, nodeMetrics as NodeMetrics, collect({to: toNode, metrics: edgeMetrics}) as EdgeMetrics
             ]]></cypher>
         <report type="codecharta"/>
     </concept>

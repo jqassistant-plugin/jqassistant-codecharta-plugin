@@ -6,6 +6,8 @@ import java.net.URL;
 import java.util.Map;
 
 import com.buschmais.jqassistant.core.rule.api.model.RuleException;
+import com.buschmais.jqassistant.plugin.common.api.model.DependsOnDescriptor;
+import com.buschmais.jqassistant.plugin.java.api.model.JavaClassesDirectoryDescriptor;
 import com.buschmais.jqassistant.plugin.java.test.AbstractJavaPluginIT;
 import com.buschmais.jqassistant.plugin.maven3.api.model.MavenProjectDirectoryDescriptor;
 
@@ -48,19 +50,21 @@ class CodeChartaIT extends AbstractJavaPluginIT {
 
         MavenProjectDirectoryDescriptor p1 = store.create(MavenProjectDirectoryDescriptor.class);
         p1.setFullQualifiedName("org.jqassistant.plugin.codecharta.test:a1:1.0.0");
+        JavaClassesDirectoryDescriptor a1 = getArtifactDescriptor("a1");
         p1.getCreatesArtifacts()
-            .add(getArtifactDescriptor("a1"));
+            .add(a1);
         parent.getModules()
             .add(p1);
-        p1.setParent(parent);
 
         MavenProjectDirectoryDescriptor p2 = store.create(MavenProjectDirectoryDescriptor.class);
         p2.setFullQualifiedName("org.jqassistant.plugin.codecharta.test:a2:1.0.0");
+        JavaClassesDirectoryDescriptor a2 = getArtifactDescriptor("a2");
         p2.getCreatesArtifacts()
-            .add(getArtifactDescriptor("a2"));
+            .add(a2);
         parent.getModules()
             .add(p2);
-        p2.setParent(parent);
+
+        store.create(a2, DependsOnDescriptor.class, a1);
         store.commitTransaction();
 
         scanClasses("a1", TestInterface.class);

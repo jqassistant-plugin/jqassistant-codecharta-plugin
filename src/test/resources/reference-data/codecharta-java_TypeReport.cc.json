@@ -57,7 +57,7 @@
     "fromNodeName" : "//org/jqassistant/plugin/codecharta/it/set/TestClass",
     "toNodeName" : "//org/jqassistant/plugin/codecharta/it/set/TestInterface",
     "attributes" : {
-      "coupling" : 1
+      "coupling" : 2
     }
   } ]
 }
