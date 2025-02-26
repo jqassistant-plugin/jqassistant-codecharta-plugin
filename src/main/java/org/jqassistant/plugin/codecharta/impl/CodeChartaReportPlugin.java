@@ -26,6 +26,7 @@ import org.jqassistant.plugin.codecharta.impl.model.MetricsDescriptor;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static java.util.Collections.*;
+import static java.util.Optional.*;
 import static org.jqassistant.plugin.codecharta.impl.json.Node.Type.FILE;
 import static org.jqassistant.plugin.codecharta.impl.json.Node.Type.FOLDER;
 
@@ -67,12 +68,11 @@ public class CodeChartaReportPlugin implements ReportPlugin {
 
     @Override
     public void beginConcept(Concept concept) {
-        log.info("Collecting data for the CodeCharta Report, this may take some time.", concept.getId());
+        log.info("Collecting data for the CodeCharta Report, this may take some time.");
     }
 
     @Override
     public void setResult(Result<? extends ExecutableRule> result) throws ReportException {
-        log.info("Preparing report.");
         Map<String, SortedMap<String, Number>> nodeMetrics = getNodeMetrics(result);
         Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = getEdgeMetrics(result);
 
@@ -110,10 +110,9 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     private static Map<String, SortedMap<String, Number>> getNodeMetrics(Result<? extends ExecutableRule> result) throws ReportException {
         Map<String, SortedMap<String, Number>> nodeMetrics = new HashMap<>();
         for (Row row : result.getRows()) {
-            Map<String, Column<?>> columns = row.getColumns();
-            Column<?> elementColumn = requireColumn(columns, COLUMN_NODE);
+            Column<?> elementColumn = requireColumn(row, COLUMN_NODE);
             String elementKey = elementColumn.getLabel();
-            Column<Map<String, Number>> nodeMetricsColumn = requireColumn(columns, COLUMN_NODE_METRICS);
+            Column<Map<String, Number>> nodeMetricsColumn = requireColumn(row, COLUMN_NODE_METRICS);
             Object value = nodeMetricsColumn.getValue();
             if (value != null) {
                 nodeMetrics.put(elementKey, getMetricsFromValue(value));
@@ -125,18 +124,20 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     private static Map<String, Map<String, SortedMap<String, Number>>> getEdgeMetrics(Result<? extends ExecutableRule> result) throws ReportException {
         Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = new HashMap<>();
         for (Row row : result.getRows()) {
-            Map<String, Column<?>> columns = row.getColumns();
-            Column<?> nodeColumn = requireColumn(columns, COLUMN_NODE);
+            Column<?> nodeColumn = requireColumn(row, COLUMN_NODE);
             String fromNodeKey = nodeColumn.getLabel();
-            Column<List<Map<String, Object>>> edgeMetricsColumn = requireColumn(columns, COLUMN_EDGE_METRICS);
-            List<Map<String, Object>> value = edgeMetricsColumn.getValue();
-            for (Map<String, Object> edgeMetricsValue : value) {
-                Object toNode = edgeMetricsValue.get("to");
-                Object metrics = edgeMetricsValue.get("metrics");
-                if (toNode != null && metrics != null) {
-                    String toNodeKey = ReportHelper.getLabel(toNode);
-                    edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
-                        .put(toNodeKey, getMetricsFromValue(metrics));
+            Optional<Column<List<SortedMap<String, Object>>>> optionalColumn = getColumn(row, COLUMN_EDGE_METRICS);
+            if (optionalColumn.isPresent()) {
+                List<SortedMap<String, Object>> value = optionalColumn.get()
+                    .getValue();
+                for (Map<String, Object> edgeMetricsValue : value) {
+                    Object toNode = edgeMetricsValue.get("to");
+                    Object metrics = edgeMetricsValue.get("metrics");
+                    if (toNode != null && metrics != null) {
+                        String toNodeKey = ReportHelper.getLabel(toNode);
+                        edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
+                            .put(toNodeKey, getMetricsFromValue(metrics));
+                    }
                 }
             }
         }
@@ -169,25 +170,35 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     private static void calculateTree(Result<? extends ExecutableRule> result, Map<String, SortedSet<String>> tree, SortedSet<String> roots,
         Map<String, String> labels) throws ReportException {
         for (Row row : result.getRows()) {
-            Column<?> elementColumn = requireColumn(row.getColumns(), COLUMN_NODE);
-            Column<?> parentColumn = requireColumn(row.getColumns(), COLUMN_PARENT_NODE);
-            String nodeKey = elementColumn.getLabel();
-            String parent = parentColumn.getLabel();
-            if (parentColumn.getValue() != null) {
-                tree.computeIfAbsent(parent, key -> new TreeSet<>())
-                    .add(nodeKey);
-            } else {
-                roots.add(nodeKey);
-            }
-            String label = row.getColumns()
-                .get(COLUMN_NODE_LABEL)
-                .getLabel();
-            labels.put(nodeKey, label != null ? label : nodeKey);
+            Column<?> nodeColumn = requireColumn(row, COLUMN_NODE);
+            String nodeKey = nodeColumn.getLabel();
+            getParentLabel(row).ifPresentOrElse(parentLabel -> tree.computeIfAbsent(parentLabel, key -> new TreeSet<>())
+                .add(nodeKey), () -> roots.add(nodeKey));
+            String label = getColumn(row, COLUMN_NODE_LABEL).map(Column::getLabel)
+                .orElse(nodeKey);
+            labels.put(nodeKey, label);
         }
     }
 
-    private static <T> Column<T> requireColumn(Map<String, Column<?>> columns, String columnName) throws ReportException {
-        Column<T> column = (Column<T>) columns.get(columnName);
+    private static Optional<String> getParentLabel(Row row) {
+        Optional<Column<Object>> optionalParentColumn = getColumn(row, COLUMN_PARENT_NODE);
+        if (optionalParentColumn.isPresent()) {
+            Column<?> parentColumn = optionalParentColumn.get();
+            if (parentColumn.getValue() != null) {
+                return of(parentColumn.getLabel());
+            }
+        }
+        return empty();
+    }
+
+    private static <T> Optional<Column<T>> getColumn(Row row, String columnName) {
+        return ofNullable((Column<T>) row.getColumns()
+            .get(columnName));
+    }
+
+    private static <T> Column<T> requireColumn(Row row, String columnName) throws ReportException {
+        Column<T> column = (Column<T>) row.getColumns()
+            .get(columnName);
         if (column == null) {
             throw new ReportException("Result does not contain required column " + columnName);
         }

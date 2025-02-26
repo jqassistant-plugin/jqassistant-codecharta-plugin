@@ -2,48 +2,48 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
-    <concept id="codecharta-java:MetricsAggregateTypes">
+    <concept id="codecharta-java:TypeMetrics">
         <requiresConcept refId="java:GeneratedType"/>
         <requiresConcept refId="java:InnerType"/>
-        <description>Provides empty node and edge metrics for Java types aggregating the types including their inner types.</description>
+        <description>Provides empty node and edge metrics for Java types aggregating their inner types.</description>
         <cypher><![CDATA[
             MATCH
-              (:Artifact)-[:CONTAINS]->(outerType:Java:Type)
+              (:Artifact)-[:CONTAINS]->(metricsType:Java:Type)
             WHERE NOT
-              outerType:Inner
+              metricsType:Inner
             WITH
-              outerType as outerType
+              metricsType
             MATCH
-              (outerType)-[:DECLARES*0..]->(type:Type)
+              (metricsType)-[:DECLARES*0..]->(aggregatedType:Type)
             WHERE NOT
-              type:Generated
+              aggregatedType:Generated
             MERGE
-              (outerType)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+              (metricsType)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
             MERGE
-              (nodeMetrics)-[:AGGREGATES]->(type)
+              (nodeMetrics)-[:AGGREGATES]->(aggregatedType)
             RETURN
-              count(type) AS Elements
+              count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
         <verify>
             <aggregation/>
         </verify>
     </concept>
 
-    <concept id="codecharta-java:TypeNodeMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:MetricsAggregateTypes"/>
+    <concept id="codecharta-java:TypeMemberMetrics">
+        <providesConcept refId="codecharta-java:TypeReport"/>
+        <requiresConcept refId="codecharta-java:TypeMetrics"/>
         <description>Provides LoC and CC node metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
-              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type)
-            OPTIONAL MATCH
-              (type)-[:DECLARES]->(method:Method)
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type)-[:DECLARES]->(method:Method)
             WITH
-              type, nodeMetrics, sum(method.effectiveLineCount) AS loc, sum(method.cyclomaticComplexity) AS cc
+              nodeMetrics, sum(method.effectiveLineCount) AS loc, sum(method.cyclomaticComplexity) AS cc
             SET
-              nodeMetrics += { loc: loc, cc: cc }
+              nodeMetrics.loc = loc
+            SET
+              nodeMetrics.cc = cc
             RETURN
-              count(nodeMetrics) AS Elements
+              count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
         <verify>
             <aggregation/>
@@ -51,22 +51,21 @@
     </concept>
 
     <concept id="codecharta-java:TypeFanInMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:MetricsAggregateTypes"/>
+        <providesConcept refId="codecharta-java:TypeReport"/>
+        <requiresConcept refId="codecharta-java:TypeMetrics"/>
         <description>Provides FanIn node and edge metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
-              (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
-            OPTIONAL MATCH
+              (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
               (:Artifact)-[:CONTAINS]->(dependent:Type)-[:DEPENDS_ON]->(type)
             WHERE NOT
               (nodeMetrics)-[:AGGREGATES]->(dependent:Type)
             WITH
               type, nodeMetrics, count(dependent) AS fanIn
             SET
-              nodeMetrics += { fanIn: fanIn }
+              nodeMetrics.fanIn = fanIn
             RETURN
-              count(nodeMetrics) AS Elements
+              count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
         <verify>
             <aggregation/>
@@ -74,22 +73,21 @@
     </concept>
 
     <concept id="codecharta-java:TypeFanOutMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:MetricsAggregateTypes"/>
+        <providesConcept refId="codecharta-java:TypeReport"/>
+        <requiresConcept refId="codecharta-java:TypeMetrics"/>
         <description>Provides FanOut node and edge metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
-              (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
-            OPTIONAL MATCH
+              (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
               (type)-[:DEPENDS_ON]->(dependency:Type)<-[:CONTAINS]-(:Artifact)
             WHERE NOT
               (nodeMetrics)-[:AGGREGATES]->(dependency:Type)
             WITH
               type, nodeMetrics, count(dependency) AS fanOut
             SET
-              nodeMetrics += { fanOut: fanOut }
+              nodeMetrics.fanOut = fanOut
             RETURN
-              count(nodeMetrics) AS Elements
+              count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
         <verify>
             <aggregation/>
@@ -97,8 +95,8 @@
     </concept>
 
     <concept id="codecharta-java:TypeCouplingMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:MetricsAggregateTypes"/>
+        <providesConcept refId="codecharta-java:TypeReport"/>
+        <requiresConcept refId="codecharta-java:TypeMetrics"/>
         <description>Provides FanOut node and edge metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -115,12 +113,12 @@
               MERGE
                 (type)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(dependency)
               SET
-                edgeMetrics += { coupling: coupling }
+                edgeMetrics.coupling = coupling
               RETURN
                 edgeMetrics
             } IN TRANSACTIONS
             RETURN
-              count(edgeMetrics) AS Elements
+              count(edgeMetrics) AS EdgeMetrics
             ]]></cypher>
         <verify>
             <aggregation/>
@@ -128,7 +126,7 @@
     </concept>
 
     <concept id="codecharta-java:TypeReport">
-        <requiresConcept refId="codecharta:Metrics"/>
+        <providesConcept refId="codecharta:Metrics"/>
         <description>Creates a CodeCharta report for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -152,6 +150,72 @@
               (node)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(toElement)
             RETURN
               node AS Node, node.name AS NodeLabel, parentNode AS ParentNode, nodeMetrics AS NodeMetrics, collect({to: toElement, metrics: edgeMetrics}) as EdgeMetrics
+            ]]></cypher>
+        <report type="codecharta"/>
+    </concept>
+
+    <concept id="codecharta-java:MavenMetrics">
+        <description>Provides empty node and edge metrics for Maven modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)
+            MERGE
+              (project)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:MavenNumberOfTypes">
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <requiresConcept refId="codecharta-java:MavenMetrics"/>
+        <description>Provides numberOfTypes metrics for Maven modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
+              (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Java:Type)
+            WITH
+              project, nodeMetrics, count(type) as numberOfTypes
+            SET
+              nodeMetrics.numberOfType = nodeMetrics.numberOfType + numberOfTypes
+            RETURN
+              count(nodeMetrics) as NodeMetrics
+            ]]></cypher>
+    </concept>
+
+    <concept id="codecharta-java:MavenTypeMetrics">
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <requiresConcept refId="codecharta-java:MavenMetrics"/>
+        <requiresConcept refId="codecharta-java:TypeMemberMetrics"/>
+        <description>Provides aggregated type metrics for Maven modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
+              (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Java:Type)-[:HAS_METRICS]->(typeMetrics:Node:Metrics)
+            WITH
+              project, nodeMetrics, sum(typeMetrics.loc) as loc, sum(typeMetrics.cc) as cc
+            SET
+              nodeMetrics.loc = loc
+            SET
+              nodeMetrics.cc = cc
+            RETURN
+              count(nodeMetrics) as NodeMetrics
+            ]]></cypher>
+    </concept>
+
+    <concept id="codecharta-java:MavenReport">
+        <providesConcept refId="codecharta:Metrics"/>
+        <description>Creates a CodeCharta report for Maven modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+            OPTIONAL MATCH
+              (project)-[:HAS_PARENT]->(parent:Maven:Project:Directory)
+            RETURN
+              project AS Node, project.fqn AS NodeLabel, parent AS ParentNode, nodeMetrics as NodeMetrics
             ]]></cypher>
         <report type="codecharta"/>
     </concept>

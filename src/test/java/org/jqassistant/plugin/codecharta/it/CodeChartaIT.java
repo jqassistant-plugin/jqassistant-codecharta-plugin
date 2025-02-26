@@ -7,8 +7,11 @@ import java.util.Map;
 
 import com.buschmais.jqassistant.core.rule.api.model.RuleException;
 import com.buschmais.jqassistant.plugin.java.test.AbstractJavaPluginIT;
+import com.buschmais.jqassistant.plugin.maven3.api.model.MavenProjectDirectoryDescriptor;
 
 import org.apache.commons.io.IOUtils;
+import org.jqassistant.plugin.codecharta.it.set.TestClass;
+import org.jqassistant.plugin.codecharta.it.set.TestInterface;
 import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -34,6 +37,38 @@ class CodeChartaIT extends AbstractJavaPluginIT {
         applyConcept("codecharta-java:TypeReport");
 
         verify("codecharta-java_TypeReport.cc.json");
+    }
+
+    @Test
+    void mavenReport() throws RuleException, IOException, ClassNotFoundException {
+        store.reset();
+        store.beginTransaction();
+        MavenProjectDirectoryDescriptor parent = store.create(MavenProjectDirectoryDescriptor.class);
+        parent.setFullQualifiedName("org.jqassistant.plugin.codecharta.test:parent:1.0.0");
+
+        MavenProjectDirectoryDescriptor p1 = store.create(MavenProjectDirectoryDescriptor.class);
+        p1.setFullQualifiedName("org.jqassistant.plugin.codecharta.test:a1:1.0.0");
+        p1.getCreatesArtifacts()
+            .add(getArtifactDescriptor("a1"));
+        parent.getModules()
+            .add(p1);
+        p1.setParent(parent);
+
+        MavenProjectDirectoryDescriptor p2 = store.create(MavenProjectDirectoryDescriptor.class);
+        p2.setFullQualifiedName("org.jqassistant.plugin.codecharta.test:a2:1.0.0");
+        p2.getCreatesArtifacts()
+            .add(getArtifactDescriptor("a2"));
+        parent.getModules()
+            .add(p2);
+        p2.setParent(parent);
+        store.commitTransaction();
+
+        scanClasses("a1", TestInterface.class);
+        scanClasses("a2", TestClass.class, TestClass.InnerClass.class, getInnerClass(TestClass.InnerClass.class, "1"));
+
+        applyConcept("codecharta-java:MavenReport");
+
+        verify("codecharta-java_MavenReport.cc.json");
     }
 
     private void verify(String reportFileName) throws IOException {
