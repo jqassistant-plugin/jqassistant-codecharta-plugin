@@ -144,13 +144,17 @@
               distinct node
             OPTIONAL MATCH
               (parentNode:Package)-[:CONTAINS]->(node)
+            WITH
+              node, parentNode
             OPTIONAL MATCH
               (node)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+            WITH
+              node, parentNode, nodeMetrics
             OPTIONAL MATCH
               (node)-[:HAS_METRICS]->(edgeMetrics:CodeCharta:Edge:Metrics)-[:TO]->(toNode)
             RETURN
               node AS Node, node.name AS NodeLabel, parentNode AS ParentNode, nodeMetrics AS NodeMetrics, collect({to: toNode, metrics: edgeMetrics}) as EdgeMetrics
-            ]]></cypher>
+        ]]></cypher>
         <report type="codecharta"/>
     </concept>
 
