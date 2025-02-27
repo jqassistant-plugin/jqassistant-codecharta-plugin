@@ -1,19 +1,22 @@
+:toc:
 = jQAssistant CodeCharta Plugin
 
 This is the https://codecharta.com//[CodeCharta^] plugin for https://jqassistant.org[jQAssistant^].
 
-image:codecharta.png[]
-
-For more information on jQAssistant see https://jqassistant.org[^].
 
 It provides the capability to export `cc.json` reports to visualize code structures and metrics in CodeCharta.
 
-* Report for *Java types*
-** _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
-** _coupling_ and _totalCoupling_ to other types as edge metrics
-* Report for *Maven modules*
-** aggregated _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
-** aggregated _coupling_ and _totalCoupling_ to other Maven modules as edge metrics
+*Java types*::
++
+image::codecharta-java.png[Java,50%, 50%]
+* _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
+* _coupling_ and _totalCoupling_ to other types as edge metrics
+
+*Maven modules*::
++
+image::codecharta-maven.png[Maven,50%,50%]
+* aggregated _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
+* aggregated _coupling_ and _totalCoupling_ to other Maven modules as edge metrics
 
 The plugin is designed it allow easy <<customization>>:
 
@@ -41,8 +44,8 @@ jqassistant:
       - codecharta-java:MavenReport #(3)
 ----
 <1> Declaration of the jQAssistant CodeCharta plugin
-<2> Activates CodeCharta report for Java types
-<3> Activates CodeCharta report for Maven modules
+<2> Activates the CodeCharta report for Java types
+<3> Activates the CodeCharta report for Maven modules
 
 === Maven
 
@@ -60,7 +63,7 @@ mvn test-compile com.buschmais.jqassistant:jqassistant-maven-plugin:scan com.bus
 
 TIP: In situations where Maven modules make use of extensions there might be a problem during scan ("Unable to obtain lock on file: <path>/target/jqassistant/store/data/databases/store_lock"). In this case add the parameter `-Djqassistant.maven.reuse-store=false` to the commandline and run again.
 
-After successful execution the folder `target/jqassistant/report/codecharta` contains a file `codecharta-java_TypeReport.cc.json` which can be imported into the CodeCharta visualization.
+After successful execution the folder `target/jqassistant/report/codecharta` contains a file `codecharta-java_TypeReport.cc.json` which can be imported into the CodeCharta visualization (e.g. https://codecharta.com/visualization/app/[WebStudio]).
 
 === CLI
 
@@ -71,7 +74,7 @@ jqassistant-commandline-neo4jv5-<version>/bin/jqassistant.sh scan -f my-war-file
 jqassistant-commandline-neo4jv5-<version>/bin/jqassistant.sh analyze
 ----
 
-The folder `jqassistant/report/codecharta` contains the files `codecharta-java_TypeReport.cc.json` and `codecharta-java_MavenReport.cc.json` to be imported into the CodeCharta visualization.
+The folder `jqassistant/report/codecharta` contains the files `codecharta-java_TypeReport.cc.json` and `codecharta-java_MavenReport.cc.json` to be imported into the CodeCharta visualization (e.g. https://codecharta.com/visualization/app/[WebStudio]).
 
 [[customization]]
 == Customization
