@@ -18,7 +18,7 @@ image::codecharta-maven.png[Maven,50%,50%]
 * aggregated _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
 * aggregated _coupling_ and _totalCoupling_ to other Maven modules as edge metrics
 
-The plugin is designed it allow easy <<customization>>:
+The plugin is designed to allow easy <<customization>>:
 
 * Add custom metrics to existing reports
 * Create custom reports on any tree structure providing metrics
