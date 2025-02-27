@@ -1,0 +1,24 @@
+{
+  "projectName" : "jQAssistant CodeCharta Report",
+  "apiVersion" : "1.2",
+  "nodes" : [ {
+    "name" : "",
+    "type" : "Folder",
+    "attributes" : { },
+    "children" : [ {
+      "name" : "org.jqassistant.plugin.codecharta.it.set.TestClass",
+      "type" : "File",
+      "attributes" : {
+        "cc" : 7,
+        "loc" : 10
+      },
+      "children" : [ ]
+    }, {
+      "name" : "org.jqassistant.plugin.codecharta.it.set.TestInterface",
+      "type" : "File",
+      "attributes" : { },
+      "children" : [ ]
+    } ]
+  } ],
+  "edges" : [ ]
+}

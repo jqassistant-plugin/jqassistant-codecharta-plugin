@@ -32,13 +32,23 @@ class CodeChartaIT extends AbstractJavaPluginIT {
     }
 
     @Test
-    void javaReport() throws RuleException, IOException {
+    void typeReport() throws RuleException, IOException {
         File classesDirectory = getClassesDirectory(CodeChartaIT.class);
         scanClassPathDirectory(classesDirectory);
 
         applyConcept("codecharta-java:TypeReport");
 
         verify("codecharta-java_TypeReport.cc.json");
+    }
+
+    @Test
+    void customReport() throws RuleException, IOException {
+        File classesDirectory = getClassesDirectory(CodeChartaIT.class);
+        scanClassPathDirectory(classesDirectory);
+
+        applyConcept("codecharta-test:CustomReport");
+
+        verify("codecharta-test_CustomReport.cc.json");
     }
 
     @Test
