@@ -4,18 +4,28 @@ This is the https://codecharta.com//[CodeCharta^] plugin for https://jqassistant
 
 image:codecharta.png[]
 
+For more information on jQAssistant see https://jqassistant.org[^].
+
 It provides the capability to export `cc.json` reports to visualize code structures and metrics in CodeCharta.
 
-NOTE: The reports are currently limited to Java projects.
+* Report for *Java types*
+** _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
+** _coupling_ and _totalCoupling_ to other types as edge metrics
+* Report for *Maven modules*
+** aggregated _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
+** aggregated _coupling_ and _totalCoupling_ to other Maven modules as edge metrics
 
-For more information on jQAssistant see https://jqassistant.org[^].
+The plugin is designed it allow easy <<customization>>:
+
+* Add custom metrics to existing reports
+* Create custom reports on any tree structure providing metrics
 
 == Usage
 
 === Configuration
 
 - Create a file `.jqassistant.yml` (or extend an existing one) in your project directory
-- Declare the CodeCharta plugin and the report to be executed during `analyze`
+- Declare the CodeCharta plugin and the reports to be executed during `analyze`
 
 [source,yaml]
 ..jqassistant.yml
@@ -28,9 +38,11 @@ jqassistant:
   analyze:
     concepts:
       - codecharta-java:TypeReport #(2)
+      - codecharta-java:MavenReport #(3)
 ----
 <1> Declaration of the jQAssistant CodeCharta plugin
-<2> Activation of the CodeCharta report for Java projects
+<2> Activates CodeCharta report for Java types
+<3> Activates CodeCharta report for Maven modules
 
 === Maven
 
@@ -59,7 +71,46 @@ jqassistant-commandline-neo4jv5-<version>/bin/jqassistant.sh scan -f my-war-file
 jqassistant-commandline-neo4jv5-<version>/bin/jqassistant.sh analyze
 ----
 
-The folder `jqassistant/report/codecharta` contains a file `codecharta-java_TypeReport.cc.json` to be imported into the CodeCharta visualization.
+The folder `jqassistant/report/codecharta` contains the files `codecharta-java_TypeReport.cc.json` and `codecharta-java_MavenReport.cc.json` to be imported into the CodeCharta visualization.
+
+[[customization]]
+== Customization
+
+=== Additional Java metrics
+
+The Java type metrics can be extended by providing an additional concept to the pre-defined concept `codecharta-java:TypeReport`.
+
+Just add a file `my-project.xml` to the directory `<working directory>/jqassistant`:
+
+[source,xml]
+.jqassistant/my-project.xml
+----
+<jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.2"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
+
+    <concept id="my-project:CustomTypeMetrics">
+        <providesConcept refId="codecharta-java:TypeReport"/>
+        <requiresConcept refId="codecharta-java:TypeMetrics"/>
+        <description>Provides the count of public methods per Java type (including inner types) as node metric.</description>
+        <cypher><![CDATA[
+            MATCH
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type)-[:DECLARES]->(publicMethod:Method{visibility:"public"})
+            WITH
+              nodeMetrics, count(publicMethod) as publicMethods
+            SET
+              nodeMetrics.publicMethods = publicMethods
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+</jqassistant-rules>
+----
+
+This concept will be activated automatically during `analyze`.
 
 == Issues & Questions
 
