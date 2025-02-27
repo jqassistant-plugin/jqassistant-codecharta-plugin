@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>jqassistant-codecharta-plugin</artifactId>
-    <version>1.0.0-M1</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <name>jQAssistant CodeCharta Plugin</name>
     <url>https://jqassistant.org/</url>
@@ -43,7 +43,7 @@
         <developerConnection>scm:git:https://github.com/jqassistant-plugin/jqassistant-codecharta-plugin.git
         </developerConnection>
         <url>https://github.com/jqassistant-plugin/jqassistant-codecharta-plugin</url>
-        <tag>1.0.0-M1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
