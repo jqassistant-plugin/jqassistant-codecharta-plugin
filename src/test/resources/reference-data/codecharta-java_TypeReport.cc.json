@@ -33,9 +33,9 @@
                   "name" : "TestClass",
                   "type" : "File",
                   "attributes" : {
-                    "cc" : 7,
+                    "complexity" : 7,
                     "fanOut" : 1,
-                    "loc" : 10
+                    "rloc" : 10
                   },
                   "children" : [ ]
                 }, {

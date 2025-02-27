@@ -9,8 +9,8 @@
       "name" : "org.jqassistant.plugin.codecharta.it.set.TestClass",
       "type" : "File",
       "attributes" : {
-        "cc" : 7,
-        "loc" : 10
+        "complexity" : 7,
+        "rloc" : 10
       },
       "children" : [ ]
     }, {

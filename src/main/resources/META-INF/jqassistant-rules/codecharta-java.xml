@@ -37,11 +37,11 @@
             MATCH
               (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type)-[:DECLARES]->(method:Method)
             WITH
-              nodeMetrics, sum(method.effectiveLineCount) AS loc, sum(method.cyclomaticComplexity) AS cc
+              nodeMetrics, sum(method.effectiveLineCount) AS rloc, sum(method.cyclomaticComplexity) AS complexity
             SET
-              nodeMetrics.loc = loc
+              nodeMetrics.rloc = rloc
             SET
-              nodeMetrics.cc = cc
+              nodeMetrics.complexity = complexity
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -196,11 +196,11 @@
               (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
               (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Java:Type)-[:HAS_METRICS]->(typeMetrics:Node:Metrics)
             WITH
-              project, nodeMetrics, sum(typeMetrics.loc) as loc, sum(typeMetrics.cc) as cc
+              project, nodeMetrics, sum(typeMetrics.rloc) as rloc, sum(typeMetrics.complexity) as complexity
             SET
-              nodeMetrics.loc = loc
+              nodeMetrics.rloc = rloc
             SET
-              nodeMetrics.cc = cc
+              nodeMetrics.complexity = complexity
             RETURN
               count(nodeMetrics) as NodeMetrics
             ]]></cypher>

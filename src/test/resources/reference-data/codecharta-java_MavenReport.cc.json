@@ -13,18 +13,18 @@
         "name" : "org.jqassistant.plugin.codecharta.test:a1:1.0.0",
         "type" : "File",
         "attributes" : {
-          "cc" : 0,
+          "complexity" : 0,
           "fanIn" : 1,
-          "loc" : 0
+          "rloc" : 0
         },
         "children" : [ ]
       }, {
         "name" : "org.jqassistant.plugin.codecharta.test:a2:1.0.0",
         "type" : "File",
         "attributes" : {
-          "cc" : 7,
+          "complexity" : 7,
           "fanOut" : 1,
-          "loc" : 10
+          "rloc" : 10
         },
         "children" : [ ]
       } ]
