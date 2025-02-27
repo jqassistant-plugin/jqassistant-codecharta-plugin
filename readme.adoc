@@ -37,7 +37,7 @@ jqassistant:
   plugins:
     - group-id: org.jqassistant.plugin  #(1)
       artifact-id: jqassistant-codecharta-plugin
-      version: ${jqassistant.codecharta-plugin.version}
+      version: 1.0.0-M1
   analyze:
     concepts:
       - codecharta-java:TypeReport #(2)
