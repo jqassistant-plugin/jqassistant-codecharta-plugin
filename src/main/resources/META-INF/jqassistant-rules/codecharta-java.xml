@@ -125,6 +125,49 @@
         </verify>
     </concept>
 
+    <concept id="codecharta-java:TypeHasGitSourceFile">
+        <description>Creates a relation HAS_SOURCE_FILE between a Java type and the file from the Git history.</description>
+        <cypher><![CDATA[
+            MATCH
+              (artifact:Java:Artifact)-[:CONTAINS]->(package:Java:Package)-[:CONTAINS]->(type:Java:Type)
+            WITH
+              distinct type, package.fileName + "/" + type.sourceFileName as sourceFileName
+            MATCH
+              (file:Git:File)
+            WHERE
+              file.relativePath ends with sourceFileName
+            MERGE
+              (type)-[:HAS_SOURCE_FILE]->(file)
+            RETURN
+              count(type) as TypesWithSourceFile
+        ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:TypeHasNumberOfCommits">
+        <providesConcept refId="codecharta-java:TypeReport"/>
+        <requiresConcept refId="codecharta-java:TypeMetrics"/>
+        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
+        <description>Provides FanOut node metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (type:Java:Type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
+              (type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
+              (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
+            WITH
+              type, nodeMetrics, count(commit) as numberOfCommits
+            SET
+              nodeMetrics.numberOfCommits = numberOfCommits
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
     <concept id="codecharta-java:TypeReport">
         <providesConcept refId="codecharta:Metrics"/>
         <description>Creates a CodeCharta report for Java types.</description>
