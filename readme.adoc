@@ -63,7 +63,7 @@ mvn test-compile com.buschmais.jqassistant:jqassistant-maven-plugin:scan com.bus
 
 TIP: In situations where Maven modules make use of extensions there might be a problem during scan ("Unable to obtain lock on file: <path>/target/jqassistant/store/data/databases/store_lock"). In this case add the parameter `-Djqassistant.maven.reuse-store=false` to the commandline and run again.
 
-After successful execution the folder `target/jqassistant/report/codecharta` contains a file `codecharta-java_TypeReport.cc.json` which can be imported into the CodeCharta visualization (e.g. https://codecharta.com/visualization/app/[WebStudio]).
+After successful execution the folder `target/jqassistant/report/codecharta` contains the report files which can be imported into the CodeCharta visualization (e.g. https://codecharta.com/visualization/app/[WebStudio]).
 
 === CLI
 
@@ -74,7 +74,7 @@ jqassistant-commandline-neo4jv5-<version>/bin/jqassistant.sh scan -f my-war-file
 jqassistant-commandline-neo4jv5-<version>/bin/jqassistant.sh analyze
 ----
 
-The folder `jqassistant/report/codecharta` contains the files `codecharta-java_TypeReport.cc.json` and `codecharta-java_MavenReport.cc.json` to be imported into the CodeCharta visualization (e.g. https://codecharta.com/visualization/app/[WebStudio]).
+The folder `jqassistant/report/codecharta` contains the files to be imported into the CodeCharta visualization (e.g. https://codecharta.com/visualization/app/[WebStudio]).
 
 [[customization]]
 == Customization
@@ -114,6 +114,74 @@ xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.
 ----
 
 This concept will be activated automatically during `analyze`.
+
+=== Custom Report
+
+The plugin allows to define concepts for creating custom reports as illustrated by the example below:
+
+[source,xml]
+----
+<jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.2"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
+
+    <concept id="my-project:CustomTypeReport">
+        <providesConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta-java:TypeMemberMetrics"/>
+        <description>Creates a custom CodeCharta report for Java types without parents and providing only node metrics.</description>
+        <cypher><![CDATA[
+            MATCH
+              (node:Java:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Metrics)
+            RETURN
+              node AS Node,  nodeMetrics AS NodeMetrics
+            ]]></cypher>
+        <report type="codecharta"/>
+    </concept>
+
+</jqassistant-rules>
+----
+
+The result of a CodeCharta report may contain the following columns:
+
+[option=headers]
+|===
+| Column | Description | Required
+
+| Node
+| The node to be visualized
+| yes
+
+| NodeLabel
+| The label of the node to render
+| no
+
+| ParentNode
+| The parent node of the node in the `Node` column.
+| no
+
+| NodeMetrics
+| The node metrics, represented either by a node with the labels `:Node:Metrics` having properties as key/value pairs representing metric attributes. Alternatively a map structure `{ attribute1: value1, attribute2: value2 }` can be returned directly.
+| yes
+
+| EdgeMetrics
+| Edge metrics from this node to other nodes, represented by an array containing a map structure `[{ to: <toNode> metrics: <metrics>}]`. The metrics can either be a node with the labels `:Edge:Metrics` or a map structure `{ attribute1: value1, attribute2: value2 }`.
+| no
+
+|===
+
+NOTE: Each parent node must be represented as `Node` in a separate row of the result to form the tree structure. Furthermore, an< node metrics provided for them are ignored. Nodes referenced with `to` in edge metrics must be part of the result as well.
+
+A full return clause typically looks as follows:
+
+[source,cypher]
+----
+  MATCH
+    ...
+  RETURN
+    node AS Node, node.name AS NodeLabel, parentNode AS ParentNode, nodeMetrics AS NodeMetrics, collect({to: toNode, metrics: edgeMetrics}) as EdgeMetrics
+----
+
+For full examples refer to the concepts `codecharta-java:TypeReport` or `codecharta-java:MavenReport` in the file link:src/main/resources/META-INF/jqassistant-rules/codecharta-java.xml[codecharta-java.xml].
 
 == Issues & Questions
 
