@@ -125,7 +125,18 @@
         </verify>
     </concept>
 
+    <concept id="codecharta-java:GitFileIndex">
+        <description>Creates an index on the property relativePath of :Git:File nodes.</description>
+        <cypher><![CDATA[
+            CREATE INDEX File_relativePath IF NOT EXISTS FOR (file:File) ON (file.relativePath)
+        ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
     <concept id="codecharta-java:TypeHasGitSourceFile">
+        <requiresConcept refId="codecharta-java:GitFileIndex"/>
         <description>Creates a relation HAS_SOURCE_FILE between a Java type and the file from the Git history.</description>
         <cypher><![CDATA[
             MATCH
@@ -161,7 +172,7 @@
               (type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
               (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
             WITH
-              type, nodeMetrics, count(distinct commit) as numberOfCommits
+              nodeMetrics, count(distinct commit) as numberOfCommits
             SET
               nodeMetrics.numberOfCommits = numberOfCommits
             RETURN
@@ -183,7 +194,7 @@
               (type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
               (author:Git:Author)-[:COMMITTED]->(:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
             WITH
-              type, nodeMetrics, count(distinct author) as numberOfAuthors
+              nodeMetrics, count(distinct author) as numberOfAuthors
             SET
               nodeMetrics.numberOfAuthors = numberOfAuthors
             RETURN
@@ -357,6 +368,50 @@
             RETURN
               count(edgeMetrics) AS EdgeMetrics
             ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:MavenProjectHasNumberOfCommits">
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <requiresConcept refId="codecharta-java:MavenMetrics"/>
+        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
+        <description>Provides NumberOfCommits node metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
+              (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Java:Type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
+              (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
+            WITH
+              nodeMetrics, count(distinct commit) as numberOfCommits
+            SET
+              nodeMetrics.numberOfCommits = numberOfCommits
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:MavenProjectHasNumberOfAuthors">
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <requiresConcept refId="codecharta-java:MavenMetrics"/>
+        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
+        <description>Provides NumberOfAuthors node metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
+              (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Java:Type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
+              (author:Git:Author)-[:COMMITTED]->(:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
+            WITH
+              nodeMetrics, count(distinct author) as numberOfAuthors
+            SET
+              nodeMetrics.numberOfAuthors = numberOfAuthors
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+        ]]></cypher>
         <verify>
             <aggregation/>
         </verify>
