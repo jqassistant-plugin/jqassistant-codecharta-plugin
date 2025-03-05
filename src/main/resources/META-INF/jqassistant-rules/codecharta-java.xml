@@ -140,9 +140,15 @@
         <description>Creates a relation HAS_SOURCE_FILE between a Java type and the file from the Git history.</description>
         <cypher><![CDATA[
             MATCH
-              (artifact:Java:Artifact)-[:CONTAINS]->(package:Java:Package)-[:CONTAINS]->(type:Java:Type)
+              (artifact:Java:Artifact)-[:CONTAINS]->(type:Type)
+            // determine source file name from class name
             WITH
-              distinct type, package.fileName + "/" + type.sourceFileName as sourceFileName
+              type, split(type.fileName,"/") as segments
+            WITH
+              type, segments, range(0, size(segments) -2) AS indexes
+            WITH
+              type, reduce(path = "", index in indexes | path + segments[index] + "/") + type.sourceFileName as sourceFileName
+            // find file in Git history that ends with the source file name
             MATCH
               (file:Git:File)
             WHERE
