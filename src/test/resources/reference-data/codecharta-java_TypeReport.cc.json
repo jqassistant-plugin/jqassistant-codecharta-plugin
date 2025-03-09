@@ -35,6 +35,8 @@
                   "attributes" : {
                     "complexity" : 7,
                     "fanOut" : 1,
+                    "numberOfAuthors" : 2,
+                    "numberOfCommits" : 2,
                     "rloc" : 10
                   },
                   "children" : [ ]
@@ -42,7 +44,9 @@
                   "name" : "TestInterface",
                   "type" : "File",
                   "attributes" : {
-                    "fanIn" : 1
+                    "fanIn" : 1,
+                    "numberOfAuthors" : 1,
+                    "numberOfCommits" : 1
                   },
                   "children" : [ ]
                 } ]
