@@ -3,7 +3,7 @@
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
     <concept id="codecharta-java:NodeMetricsAggregatesType">
-        <description></description>
+        <description>Provides node metrics and their aggregated Java types.</description>
         <cypher><![CDATA[
             MATCH
               (nodeMetrics)-[:AGGREGATES]->(aggregatedType:Type)
@@ -134,92 +134,6 @@
             RETURN
               count(edgeMetrics) AS EdgeMetrics
             ]]></cypher>
-        <verify>
-            <aggregation/>
-        </verify>
-    </concept>
-
-    <concept id="codecharta-java:GitFileIndex">
-        <description>Creates an index on the property relativePath of :Git:File nodes.</description>
-        <cypher><![CDATA[
-            CREATE INDEX File_relativePath IF NOT EXISTS FOR (file:File) ON (file.relativePath)
-        ]]></cypher>
-        <verify>
-            <aggregation/>
-        </verify>
-    </concept>
-
-    <concept id="codecharta-java:TypeHasGitSourceFile">
-        <requiresConcept refId="codecharta-java:GitFileIndex"/>
-        <description>Creates a relation HAS_SOURCE_FILE between a Java type and the file from the Git history.</description>
-        <cypher><![CDATA[
-            MATCH
-              (artifact:Java:Artifact)-[:CONTAINS]->(type:Type)
-            // determine source file name from class name
-            WITH
-              type, split(type.fileName,"/") as segments
-            WITH
-              type, segments, range(0, size(segments) -2) AS indexes
-            WITH
-              type, reduce(path = "", index in indexes | path + segments[index] + "/") + type.sourceFileName as sourceFileName
-            // find file in Git history that ends with the source file name
-            MATCH
-              (file:Git:File)
-            WHERE
-              file.relativePath ends with sourceFileName
-            CALL {
-              WITH
-                type, file
-              MERGE
-                (type)-[:HAS_SOURCE_FILE]->(file)
-            } IN TRANSACTIONS
-            RETURN
-              count(type) as TypesWithSourceFile
-        ]]></cypher>
-        <verify>
-            <aggregation/>
-        </verify>
-    </concept>
-
-    <concept id="codecharta-java:TypeHasNumberOfCommits">
-        <providesConcept refId="codecharta-java:TypeReport"/>
-        <requiresConcept refId="codecharta-java:TypeMetrics"/>
-        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
-        <description>Provides NumberOfCommits node metrics for Java types.</description>
-        <cypher><![CDATA[
-            MATCH
-              (type:Java:Type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
-              (type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
-              (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
-            WITH
-              nodeMetrics, count(distinct commit) as numberOfCommits
-            SET
-              nodeMetrics.numberOfCommits = numberOfCommits
-            RETURN
-              count(nodeMetrics) AS NodeMetrics
-            ]]></cypher>
-        <verify>
-            <aggregation/>
-        </verify>
-    </concept>
-
-    <concept id="codecharta-java:TypeHasNumberOfAuthors">
-        <providesConcept refId="codecharta-java:TypeReport"/>
-        <requiresConcept refId="codecharta-java:TypeMetrics"/>
-        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
-        <description>Provides NumberOfAuthors node metrics for Java types.</description>
-        <cypher><![CDATA[
-            MATCH
-              (type:Java:Type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
-              (type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
-              (author:Git:Author)-[:COMMITTED]->(:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
-            WITH
-              nodeMetrics, count(distinct author) as numberOfAuthors
-            SET
-              nodeMetrics.numberOfAuthors = numberOfAuthors
-            RETURN
-              count(nodeMetrics) AS NodeMetrics
-        ]]></cypher>
         <verify>
             <aggregation/>
         </verify>
@@ -402,48 +316,6 @@
         </verify>
     </concept>
 
-    <concept id="codecharta-java:MavenProjectHasNumberOfCommits">
-        <providesConcept refId="codecharta-java:MavenReport"/>
-        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
-        <description>Provides NumberOfCommits node metrics for Java types.</description>
-        <cypher><![CDATA[
-            MATCH
-              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
-              (type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
-              (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
-            WITH
-              nodeMetrics, count(distinct commit) as numberOfCommits
-            SET
-              nodeMetrics.numberOfCommits = numberOfCommits
-            RETURN
-              count(nodeMetrics) AS NodeMetrics
-            ]]></cypher>
-        <verify>
-            <aggregation/>
-        </verify>
-    </concept>
-
-    <concept id="codecharta-java:MavenProjectHasNumberOfAuthors">
-        <providesConcept refId="codecharta-java:MavenReport"/>
-        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
-        <description>Provides NumberOfAuthors node metrics for Java types.</description>
-        <cypher><![CDATA[
-            MATCH
-              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
-              (type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
-              (author:Git:Author)-[:COMMITTED]->(:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
-            WITH
-              nodeMetrics, count(distinct author) as numberOfAuthors
-            SET
-              nodeMetrics.numberOfAuthors = numberOfAuthors
-            RETURN
-              count(nodeMetrics) AS NodeMetrics
-        ]]></cypher>
-        <verify>
-            <aggregation/>
-        </verify>
-    </concept>
-
     <concept id="codecharta-java:MavenReport">
         <providesConcept refId="codecharta:Metrics"/>
         <requiresConcept refId="codecharta-java:MavenMetricsAggregatesType"/>
@@ -459,6 +331,94 @@
               node AS Node, node.fqn AS NodeLabel, parent AS ParentNode, nodeMetrics as NodeMetrics, collect({to: toNode, metrics: edgeMetrics}) as EdgeMetrics
             ]]></cypher>
         <report type="codecharta"/>
+    </concept>
+
+    <concept id="codecharta-java:GitFileIndex">
+        <description>Creates an index on the property relativePath of :Git:File nodes.</description>
+        <cypher><![CDATA[
+            CREATE INDEX File_relativePath IF NOT EXISTS FOR (file:File) ON (file.relativePath)
+        ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:TypeHasGitSourceFile">
+        <requiresConcept refId="codecharta-java:GitFileIndex"/>
+        <description>Creates a relation HAS_SOURCE_FILE between a Java type and the file from the Git history.</description>
+        <cypher><![CDATA[
+            MATCH
+              (artifact:Java:Artifact)-[:CONTAINS]->(type:Type)
+            // determine source file name from class name
+            WITH
+              type, split(type.fileName,"/") as segments
+            WITH
+              type, segments, range(0, size(segments) -2) AS indexes
+            WITH
+              type, reduce(path = "", index in indexes | path + segments[index] + "/") + type.sourceFileName as sourceFileName
+            // find file in Git history that ends with the source file name
+            MATCH
+              (file:Git:File)
+            WHERE
+              file.relativePath ends with sourceFileName
+            CALL {
+              WITH
+                type, file
+              MERGE
+                (type)-[:HAS_SOURCE_FILE]->(file)
+            } IN TRANSACTIONS
+            RETURN
+              count(type) as TypesWithSourceFile
+        ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:NumberOfCommits">
+        <providesConcept refId="codecharta-java:TypeReport"/>
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <requiresConcept refId="codecharta-java:NodeMetricsAggregatesType"/>
+        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
+        <description>Provides NumberOfCommits node metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
+              (type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
+              (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
+            WITH
+              nodeMetrics, count(distinct commit) as numberOfCommits
+            SET
+              nodeMetrics.numberOfCommits = numberOfCommits
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+            ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
+    </concept>
+
+    <concept id="codecharta-java:NumberOfAuthors">
+        <providesConcept refId="codecharta-java:TypeReport"/>
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <requiresConcept refId="codecharta-java:NodeMetricsAggregatesType"/>
+        <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
+        <description>Provides NumberOfAuthors node metrics for Java types.</description>
+        <cypher><![CDATA[
+            MATCH
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
+              (type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
+              (author:Git:Author)-[:COMMITTED]->(:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
+            WITH
+              nodeMetrics, count(distinct author) as numberOfAuthors
+            SET
+              nodeMetrics.numberOfAuthors = numberOfAuthors
+            RETURN
+              count(nodeMetrics) AS NodeMetrics
+        ]]></cypher>
+        <verify>
+            <aggregation/>
+        </verify>
     </concept>
 
 </jqassistant-rules>
