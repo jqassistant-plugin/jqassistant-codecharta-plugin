@@ -94,7 +94,7 @@ xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.
 
     <concept id="my-project:CustomTypeMetrics">
         <providesConcept refId="codecharta-java:TypeReport"/>
-        <requiresConcept refId="codecharta-java:TypeMetrics"/>
+        <requiresConcept refId="codecharta-java:TypeNodeMetricsAggregatesType"/>
         <description>Provides the count of public methods per Java type (including inner types) as node metric.</description>
         <cypher><![CDATA[
             MATCH

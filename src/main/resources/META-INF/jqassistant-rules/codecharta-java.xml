@@ -15,7 +15,7 @@
         </verify>
     </concept>
 
-    <concept id="codecharta-java:TypeMetrics">
+    <concept id="codecharta-java:TypeNodeMetricsAggregatesType">
         <providesConcept refId="codecharta-java:NodeMetricsAggregatesType"/>
         <requiresConcept refId="java:GeneratedType"/>
         <requiresConcept refId="java:InnerType"/>
@@ -43,9 +43,10 @@
         </verify>
     </concept>
 
-    <concept id="codecharta-java:TypeMemberMetrics">
+    <concept id="codecharta-java:MemberMetrics">
         <providesConcept refId="codecharta-java:TypeReport"/>
-        <requiresConcept refId="codecharta-java:TypeMetrics"/>
+        <providesConcept refId="codecharta-java:MavenReport"/>
+        <requiresConcept refId="codecharta-java:NodeMetricsAggregatesType"/>
         <description>Provides LoC and CC node metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -66,7 +67,7 @@
 
     <concept id="codecharta-java:TypeFanInMetrics">
         <providesConcept refId="codecharta-java:TypeReport"/>
-        <requiresConcept refId="codecharta-java:TypeMetrics"/>
+        <requiresConcept refId="codecharta-java:TypeNodeMetricsAggregatesType"/>
         <description>Provides FanIn node metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -88,7 +89,7 @@
 
     <concept id="codecharta-java:TypeFanOutMetrics">
         <providesConcept refId="codecharta-java:TypeReport"/>
-        <requiresConcept refId="codecharta-java:TypeMetrics"/>
+        <requiresConcept refId="codecharta-java:TypeNodeMetricsAggregatesType"/>
         <description>Provides FanOut node metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -110,7 +111,7 @@
 
     <concept id="codecharta-java:TypeCouplingMetrics">
         <providesConcept refId="codecharta-java:TypeReport"/>
-        <requiresConcept refId="codecharta-java:TypeMetrics"/>
+        <requiresConcept refId="codecharta-java:TypeNodeMetricsAggregatesType"/>
         <description>Provides FanOut node and edge metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -187,7 +188,7 @@
         </verify>
     </concept>
 
-    <concept id="codecharta-java:MavenMetricsAggregatesType">
+    <concept id="codecharta-java:MavenNodeMetricsAggregatesType">
         <providesConcept refId="codecharta-java:NodeMetricsAggregatesType"/>
         <requiresConcept refId="codecharta-java:MavenMetrics"/>
         <description>Provides empty node and edge metrics for Maven modules.</description>
@@ -216,25 +217,6 @@
               project, nodeMetrics, count(type) as numberOfTypes
             SET
               nodeMetrics.numberOfType = nodeMetrics.numberOfType + numberOfTypes
-            RETURN
-              count(nodeMetrics) as NodeMetrics
-            ]]></cypher>
-    </concept>
-
-    <concept id="codecharta-java:MavenTypeMetrics">
-        <providesConcept refId="codecharta-java:MavenReport"/>
-        <requiresConcept refId="codecharta-java:TypeMemberMetrics"/>
-        <description>Provides aggregated type metrics for Maven modules.</description>
-        <cypher><![CDATA[
-            MATCH
-              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
-              (type)-[:HAS_METRICS]->(typeMetrics:Node:Metrics)
-            WITH
-              project, nodeMetrics, sum(typeMetrics.rloc) as rloc, sum(typeMetrics.complexity) as complexity
-            SET
-              nodeMetrics.rloc = rloc
-            SET
-              nodeMetrics.complexity = complexity
             RETURN
               count(nodeMetrics) as NodeMetrics
             ]]></cypher>
@@ -318,7 +300,7 @@
 
     <concept id="codecharta-java:MavenReport">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:MavenMetricsAggregatesType"/>
+        <requiresConcept refId="codecharta-java:MavenNodeMetricsAggregatesType"/>
         <description>Creates a CodeCharta report for Maven modules.</description>
         <cypher><![CDATA[
             MATCH
