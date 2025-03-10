@@ -4,8 +4,8 @@
 
     <concept id="codecharta-test:CustomReport">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:TypeMemberMetrics"/>
-        <description>Creates a custom CodeCharta report for Java types without parents and providing only node metrics .</description>
+        <requiresConcept refId="codecharta-java:MemberMetrics"/>
+        <description>Creates a custom CodeCharta report for Java types without parents and providing only node metrics.</description>
         <cypher><![CDATA[
             MATCH
               (node:Java:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Metrics)

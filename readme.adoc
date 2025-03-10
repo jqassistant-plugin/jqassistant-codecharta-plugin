@@ -127,7 +127,7 @@ The plugin allows to define concepts for creating custom reports as illustrated 
 
     <concept id="my-project:CustomTypeReport">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:TypeMemberMetrics"/>
+        <requiresConcept refId="codecharta-java:MemberMetrics"/>
         <description>Creates a custom CodeCharta report for Java types without parents and providing only node metrics.</description>
         <cypher><![CDATA[
             MATCH
