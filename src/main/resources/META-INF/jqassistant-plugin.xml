@@ -3,7 +3,7 @@
                     xsi:schemaLocation="http://schema.jqassistant.org/plugin/v2.4 https://schema.jqassistant.org/plugin/jqassistant-plugin-v2.4.xsd"
                     name="jQAssistant CodeCharta Plugin" id="jqa.plugin.codecharta"
                     version="${project.version}">
-    <description>Plugin for jQAssistant for creating reports for CodeCharta visualizations.</description>
+    <description>${project.description}</description>
     <model>
         <class>org.jqassistant.plugin.codecharta.impl.model.NodeMetricsDescriptor</class>
         <class>org.jqassistant.plugin.codecharta.impl.model.EdgeMetricsDescriptor</class>
