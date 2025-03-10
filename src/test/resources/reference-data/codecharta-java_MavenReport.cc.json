@@ -13,9 +13,9 @@
         "name" : "org.jqassistant.plugin.codecharta.test:a1:1.0.0",
         "type" : "File",
         "attributes" : {
-          "complexity" : 0,
           "fanIn" : 1,
-          "rloc" : 0
+          "numberOfAuthors" : 1,
+          "numberOfCommits" : 1
         },
         "children" : [ ]
       }, {
@@ -24,6 +24,8 @@
         "attributes" : {
           "complexity" : 7,
           "fanOut" : 1,
+          "numberOfAuthors" : 2,
+          "numberOfCommits" : 2,
           "rloc" : 10
         },
         "children" : [ ]
