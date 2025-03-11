@@ -47,7 +47,7 @@
         <providesConcept refId="codecharta-java:TypeReport"/>
         <providesConcept refId="codecharta-java:MavenReport"/>
         <requiresConcept refId="codecharta-java:NodeMetricsAggregatesType"/>
-        <description>Provides LoC and CC node metrics for Java types.</description>
+        <description>Provides rloc and complexity node metrics based on Java types.</description>
         <cypher><![CDATA[
             MATCH
               (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type)-[:DECLARES]->(method:Method)
@@ -72,13 +72,15 @@
         <cypher><![CDATA[
             MATCH
               (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
-              (:Artifact)-[:CONTAINS]->(dependent:Type)-[:DEPENDS_ON]->(type)
+              (:Artifact)-[:CONTAINS]->(dependent:Type)-[dependsOn:DEPENDS_ON]->(type)
             WHERE NOT
               (nodeMetrics)-[:AGGREGATES]->(dependent:Type)
             WITH
-              nodeMetrics, count(dependent) AS fanIn
+              nodeMetrics, count(dependsOn) AS fanIn, sum(dependsOn.weight) as totalFanIn
             SET
               nodeMetrics.fanIn = fanIn
+            SET
+              nodeMetrics.totalFanIn = totalFanIn
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -94,13 +96,15 @@
         <cypher><![CDATA[
             MATCH
               (type:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
-              (type)-[:DEPENDS_ON]->(dependency:Type)<-[:CONTAINS]-(:Artifact)
+              (type)-[dependsOn:DEPENDS_ON]->(dependency:Type)<-[:CONTAINS]-(:Artifact)
             WHERE NOT
               (nodeMetrics)-[:AGGREGATES]->(dependency:Type)
             WITH
-              nodeMetrics, count(dependency) AS fanOut
+              nodeMetrics, count(dependsOn) AS fanOut, sum(dependsOn.weight) as totalFanOut
             SET
               nodeMetrics.fanOut = fanOut
+            SET
+              nodeMetrics.totalFanOut = totalFanOut
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -191,11 +195,14 @@
     <concept id="codecharta-java:MavenNodeMetricsAggregatesType">
         <providesConcept refId="codecharta-java:NodeMetricsAggregatesType"/>
         <requiresConcept refId="codecharta-java:MavenMetrics"/>
+        <requiresConcept refId="java:GeneratedType"/>
         <description>Provides empty node and edge metrics for Maven modules.</description>
         <cypher><![CDATA[
             MATCH
               (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
               (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Java:Type)
+            WHERE NOT
+              type:Generated
             MERGE
               (nodeMetrics)-[:AGGREGATES]->(type)
             RETURN
@@ -229,13 +236,15 @@
             MATCH
               (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
               (dependentProject:Maven:Project:Directory)-[:HAS_METRICS]->(:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependentType:Type),
-              (type)<-[:DEPENDS_ON]-(dependentType)
+              (type)<-[dependsOn:DEPENDS_ON]-(dependentType)
             WHERE
               project <> dependentProject
             WITH
-              nodeMetrics, count(dependentType) as fanIn
+              nodeMetrics, count(dependsOn) as fanIn, sum(dependsOn.weight) as totalFanIn
             SET
               nodeMetrics.fanIn = fanIn
+            SET
+              nodeMetrics.totalFanIn = totalFanIn
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -251,13 +260,15 @@
             MATCH
               (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
               (dependencyProject:Maven:Project:Directory)-[:HAS_METRICS]->(:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependencyType:Type),
-              (type)-[:DEPENDS_ON]->(dependencyType)
+              (type)-[dependsOn:DEPENDS_ON]->(dependencyType)
             WHERE
               project <> dependencyProject
             WITH
-              nodeMetrics, count(dependencyType) as fanOut
+              nodeMetrics, count(dependsOn) as fanOut, sum(dependsOn.weight) as totalFanOut
             SET
               nodeMetrics.fanOut = fanOut
+            SET
+              nodeMetrics.totalFanOut = totalFanOut
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>

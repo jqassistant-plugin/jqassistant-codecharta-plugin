@@ -37,7 +37,8 @@
                     "fanOut" : 1,
                     "numberOfAuthors" : 2,
                     "numberOfCommits" : 2,
-                    "rloc" : 10
+                    "rloc" : 10,
+                    "totalFanOut" : 2
                   },
                   "children" : [ ]
                 }, {
@@ -46,7 +47,8 @@
                   "attributes" : {
                     "fanIn" : 1,
                     "numberOfAuthors" : 1,
-                    "numberOfCommits" : 1
+                    "numberOfCommits" : 1,
+                    "totalFanIn" : 2
                   },
                   "children" : [ ]
                 } ]
