@@ -93,8 +93,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
     <concept id="my-project:CustomTypeMetrics">
-        <providesConcept refId="codecharta-java:TypeReport"/>
-        <requiresConcept refId="codecharta-java:TypeNodeMetricsAggregatesType"/>
+        <providesConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
         <description>Provides the count of public methods per Java type (including inner types) as node metric.</description>
         <cypher><![CDATA[
             MATCH
@@ -110,6 +110,7 @@ xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.
             <aggregation/>
         </verify>
     </concept>
+
 </jqassistant-rules>
 ----
 
@@ -125,15 +126,14 @@ The plugin allows to define concepts for creating custom reports as illustrated 
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
-    <concept id="my-project:CustomTypeReport">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:MemberMetrics"/>
+    <concept id="codecharta-test:CustomReport">
+        <requiresConcept refId="codecharta:Metrics"/>
         <description>Creates a custom CodeCharta report for Java types without parents and providing only node metrics.</description>
         <cypher><![CDATA[
             MATCH
               (node:Java:Type)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Metrics)
             RETURN
-              node AS Node,  nodeMetrics AS NodeMetrics
+              node AS Node, nodeMetrics AS NodeMetrics
             ]]></cypher>
         <report type="codecharta"/>
     </concept>

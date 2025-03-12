@@ -16,6 +16,7 @@
           "fanIn" : 1,
           "numberOfAuthors" : 1,
           "numberOfCommits" : 1,
+          "numberOfTypes" : 1,
           "totalFanIn" : 2
         },
         "children" : [ ]
@@ -27,6 +28,7 @@
           "fanOut" : 1,
           "numberOfAuthors" : 2,
           "numberOfCommits" : 2,
+          "numberOfTypes" : 3,
           "rloc" : 10,
           "totalFanOut" : 2
         },

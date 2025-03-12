@@ -1,11 +1,5 @@
 package org.jqassistant.plugin.codecharta.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-import java.util.function.Consumer;
-
 import com.buschmais.jqassistant.core.report.api.ReportContext;
 import com.buschmais.jqassistant.core.report.api.ReportException;
 import com.buschmais.jqassistant.core.report.api.ReportHelper;
@@ -15,14 +9,21 @@ import com.buschmais.jqassistant.core.report.api.model.Result;
 import com.buschmais.jqassistant.core.report.api.model.Row;
 import com.buschmais.jqassistant.core.rule.api.model.Concept;
 import com.buschmais.jqassistant.core.rule.api.model.ExecutableRule;
-import com.buschmais.xo.neo4j.api.model.Neo4jNode;
+import com.buschmais.xo.api.CompositeObject;
+import com.buschmais.xo.neo4j.api.model.Neo4jPropertyContainer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.jqassistant.plugin.codecharta.impl.json.CodeChartaReport;
 import org.jqassistant.plugin.codecharta.impl.json.Edge;
 import org.jqassistant.plugin.codecharta.impl.json.Node;
-import org.jqassistant.plugin.codecharta.impl.model.MetricsDescriptor;
+import org.jqassistant.plugin.codecharta.impl.model.EdgeMetricsDescriptor;
+import org.jqassistant.plugin.codecharta.impl.model.NodeMetricsDescriptor;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 import static java.util.Collections.*;
@@ -73,8 +74,9 @@ public class CodeChartaReportPlugin implements ReportPlugin {
 
     @Override
     public void setResult(Result<? extends ExecutableRule> result) throws ReportException {
-        Map<String, SortedMap<String, Number>> nodeMetrics = getNodeMetrics(result);
-        Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = getEdgeMetrics(result);
+        Map<NodeMetricsDescriptor, String> nodeKeysByMetric = new HashMap<>();
+        Map<String, SortedMap<String, Number>> nodeMetrics = getNodeMetrics(result, nodeKeysByMetric);
+        Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = getEdgeMetrics(result, nodeKeysByMetric);
 
         SortedSet<String> roots = new TreeSet<>();
         Map<String, SortedSet<String>> tree = new HashMap<>();
@@ -107,7 +109,8 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         }
     }
 
-    private static Map<String, SortedMap<String, Number>> getNodeMetrics(Result<? extends ExecutableRule> result) throws ReportException {
+    private static Map<String, SortedMap<String, Number>> getNodeMetrics(Result<? extends ExecutableRule> result,
+        Map<NodeMetricsDescriptor, String> nodeKeysByMetric) throws ReportException {
         Map<String, SortedMap<String, Number>> nodeMetrics = new HashMap<>();
         for (Row row : result.getRows()) {
             Column<?> elementColumn = requireColumn(row, COLUMN_NODE);
@@ -115,47 +118,45 @@ public class CodeChartaReportPlugin implements ReportPlugin {
             Column<Map<String, Number>> nodeMetricsColumn = requireColumn(row, COLUMN_NODE_METRICS);
             Object value = nodeMetricsColumn.getValue();
             if (value != null) {
-                nodeMetrics.put(elementKey, getMetricsFromValue(value));
+                nodeMetrics.put(elementKey, getMetricsFromValue(value, COLUMN_NODE_METRICS));
+                if (value instanceof NodeMetricsDescriptor) {
+                    nodeKeysByMetric.put((NodeMetricsDescriptor) value, elementKey);
+                }
             }
         }
         return nodeMetrics;
     }
 
-    private static Map<String, Map<String, SortedMap<String, Number>>> getEdgeMetrics(Result<? extends ExecutableRule> result) throws ReportException {
+    private static Map<String, Map<String, SortedMap<String, Number>>> getEdgeMetrics(Result<? extends ExecutableRule> result,
+        Map<NodeMetricsDescriptor, String> nodeKeysByMetric) throws ReportException {
         Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = new HashMap<>();
         for (Row row : result.getRows()) {
             Column<?> nodeColumn = requireColumn(row, COLUMN_NODE);
             String fromNodeKey = nodeColumn.getLabel();
-            Optional<Column<List<SortedMap<String, Object>>>> optionalColumn = getColumn(row, COLUMN_EDGE_METRICS);
+            Optional<Column<List<EdgeMetricsDescriptor>>> optionalColumn = getColumn(row, COLUMN_EDGE_METRICS);
             if (optionalColumn.isPresent()) {
-                List<SortedMap<String, Object>> value = optionalColumn.get()
+                List<EdgeMetricsDescriptor> value = optionalColumn.get()
                     .getValue();
-                for (Map<String, Object> edgeMetricsValue : value) {
-                    Object toNode = edgeMetricsValue.get("to");
-                    Object metrics = edgeMetricsValue.get("metrics");
-                    if (toNode != null && metrics != null) {
-                        String toNodeKey = ReportHelper.getLabel(toNode);
-                        edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
-                            .put(toNodeKey, getMetricsFromValue(metrics));
-                    }
+                for (EdgeMetricsDescriptor edgeMetricsValue : value) {
+                    String toNodeKey = nodeKeysByMetric.get(edgeMetricsValue.getTo());
+                    edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
+                        .put(toNodeKey, getMetricsFromValue(edgeMetricsValue, COLUMN_EDGE_METRICS));
                 }
             }
         }
         return edgeMetrics;
     }
 
-    private static SortedMap<String, Number> getMetricsFromValue(Object value) throws ReportException {
-        SortedMap<String, Number> metric;
+    private static SortedMap<String, Number> getMetricsFromValue(Object value, String metricColumnName) throws ReportException {
         if (value instanceof Map) {
-            metric = getMetricsFromValue((Map<?, ?>) value);
-        } else if (value instanceof MetricsDescriptor) {
-            MetricsDescriptor metricsDescriptor = (MetricsDescriptor) value;
-            Neo4jNode<?, ?, ?, ?> neo4jNode = metricsDescriptor.getDelegate();
-            metric = getMetricsFromValue(neo4jNode.getProperties());
+            return getMetricsFromValue((Map<?, ?>) value);
+        } else if (value instanceof CompositeObject) {
+            CompositeObject compositeObject = (CompositeObject) value;
+            Neo4jPropertyContainer neo4jPropertyContainer = compositeObject.getDelegate();
+            return getMetricsFromValue(neo4jPropertyContainer.getProperties());
         } else {
-            throw new ReportException("Cannot extract value from " + COLUMN_NODE_METRICS + " column:" + value);
+            throw new ReportException("Cannot extract value from " + metricColumnName + " column:" + value);
         }
-        return metric;
     }
 
     private static SortedMap<String, Number> getMetricsFromValue(Map<?, ?> container) {

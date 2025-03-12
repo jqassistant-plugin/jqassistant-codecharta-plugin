@@ -2,19 +2,28 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
-    <concept id="codecharta:Metrics">
-        <description>Provided Metrics.</description>
+    <concept id="codecharta:NodeMetricsForAggregationLevel">
+        <description>Provides node metrics for an aggregation level.</description>
         <cypher><![CDATA[
             MATCH
-              (metrics:CodeCharta:Metrics)
-            UNWIND
-              keys(metrics) AS key
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]-(aggregationLevel:AggregationLevel)
+            OPTIONAL MATCH
+              (nodeMetrics)-[:AGGREGATES]->(element)
             RETURN
-              count(metrics) AS Metrics, collect(DISTINCT key) AS Keys
+              aggregationLevel as AggregationLevel, count(nodeMetrics) as Metrics, count(element) as AggregatedElements
             ]]></cypher>
-        <verify>
-            <aggregation/>
-        </verify>
+    </concept>
+
+    <concept id="codecharta:Metrics">
+        <description>Provided metric keys per aggregation level</description>
+        <cypher><![CDATA[
+            MATCH
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]-(aggregationLevel:AggregationLevel)
+            UNWIND
+              keys(nodeMetrics) AS key
+            RETURN
+              aggregationLevel as AggregationLevel, count(nodeMetrics) as Metrics, collect(DISTINCT key) as Keys
+            ]]></cypher>
     </concept>
 
 </jqassistant-rules>

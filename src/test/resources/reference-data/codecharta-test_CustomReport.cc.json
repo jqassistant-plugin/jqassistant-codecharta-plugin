@@ -10,13 +10,24 @@
       "type" : "File",
       "attributes" : {
         "complexity" : 7,
-        "rloc" : 10
+        "fanOut" : 1,
+        "numberOfAuthors" : 2,
+        "numberOfCommits" : 2,
+        "numberOfTypes" : 3,
+        "rloc" : 10,
+        "totalFanOut" : 2
       },
       "children" : [ ]
     }, {
       "name" : "org.jqassistant.plugin.codecharta.it.set.TestInterface",
       "type" : "File",
-      "attributes" : { },
+      "attributes" : {
+        "fanIn" : 1,
+        "numberOfAuthors" : 1,
+        "numberOfCommits" : 1,
+        "numberOfTypes" : 1,
+        "totalFanIn" : 2
+      },
       "children" : [ ]
     } ]
   } ],

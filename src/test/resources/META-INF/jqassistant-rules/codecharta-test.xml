@@ -3,8 +3,7 @@
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
     <concept id="codecharta-test:CustomReport">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:MemberMetrics"/>
+        <requiresConcept refId="codecharta:Metrics"/>
         <description>Creates a custom CodeCharta report for Java types without parents and providing only node metrics.</description>
         <cypher><![CDATA[
             MATCH

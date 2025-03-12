@@ -5,6 +5,7 @@
                     version="${project.version}">
     <description>Plugin for jQAssistant for creating reports for CodeCharta visualizations.</description>
     <model>
+        <class>org.jqassistant.plugin.codecharta.impl.model.AggregationLevelDescriptor</class>
         <class>org.jqassistant.plugin.codecharta.impl.model.NodeMetricsDescriptor</class>
         <class>org.jqassistant.plugin.codecharta.impl.model.EdgeMetricsDescriptor</class>
     </model>
