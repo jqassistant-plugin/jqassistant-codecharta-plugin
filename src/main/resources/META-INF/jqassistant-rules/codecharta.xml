@@ -2,7 +2,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
-    <concept id="codecharta:NodeMetricsForAggregationLevel">
+    <concept id="codecharta:AggregationLevel">
         <description>Provides node metrics for an aggregation level.</description>
         <cypher><![CDATA[
             MATCH

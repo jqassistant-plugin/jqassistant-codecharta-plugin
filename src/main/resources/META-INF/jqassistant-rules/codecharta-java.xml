@@ -2,8 +2,8 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
-    <concept id="codecharta-java:NodeMetricsPerTypeAggregationLevel">
-        <providesConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
+    <concept id="codecharta-java:TypeAggregationLevel">
+        <providesConcept refId="codecharta:AggregationLevel"/>
         <requiresConcept refId="java:GeneratedType"/>
         <requiresConcept refId="java:InnerType"/>
         <description>Provides Java types as aggregation level.</description>
@@ -84,8 +84,8 @@
             ]]></cypher>
     </concept>
 
-    <concept id="codecharta-java:NodeMetricsPerMavenAggregationLevel">
-        <providesConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
+    <concept id="codecharta-java:MavenAggregationLevel">
+        <providesConcept refId="codecharta:AggregationLevel"/>
         <requiresConcept refId="codecharta-java:MavenMetrics"/>
         <requiresConcept refId="java:GeneratedType"/>
         <description>Provides empty node and edge metrics for Maven modules.</description>
@@ -120,7 +120,7 @@
 
     <concept id="codecharta-java:NumberOfTypesMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
+        <requiresConcept refId="codecharta:AggregationLevel"/>
         <description>Provides numberOfTypes metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -136,7 +136,7 @@
 
     <concept id="codecharta-java:SizeAndComplexityMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
+        <requiresConcept refId="codecharta:AggregationLevel"/>
         <description>Provides rloc and complexity metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -157,7 +157,7 @@
 
     <concept id="codecharta-java:FanInMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
+        <requiresConcept refId="codecharta:AggregationLevel"/>
         <description>Provides fanIn metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -183,7 +183,7 @@
 
     <concept id="codecharta-java:FanOutMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
+        <requiresConcept refId="codecharta:AggregationLevel"/>
         <description>Provides fanOut node metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -209,7 +209,7 @@
 
     <concept id="codecharta-java:CouplingMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta-java:NodeMetricsPerTypeAggregationLevel"/>
+        <requiresConcept refId="codecharta:AggregationLevel"/>
         <description>Provides FanOut node and edge metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -285,7 +285,7 @@
 
     <concept id="codecharta-java:NumberOfCommitsMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
+        <requiresConcept refId="codecharta:AggregationLevel"/>
         <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
         <description>Provides NumberOfCommits node metrics for Java types.</description>
         <cypher><![CDATA[
@@ -307,7 +307,7 @@
 
     <concept id="codecharta-java:NumberOfAuthorsMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetricsForAggregationLevel"/>
+        <requiresConcept refId="codecharta:AggregationLevel"/>
         <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
         <description>Provides NumberOfAuthors node metrics for Java types.</description>
         <cypher><![CDATA[
