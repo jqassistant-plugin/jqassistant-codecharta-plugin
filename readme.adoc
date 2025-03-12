@@ -164,7 +164,9 @@ The result of a CodeCharta report may contain the following columns:
 | yes
 
 | EdgeMetrics
-| Edge metrics from this node to other nodes, represented by an array containing a map structure `[{ to: <toNode> metrics: <metrics>}]`. The metrics can either be a node with the labels `:Edge:Metrics` or a map structure `{ attribute1: value1, attribute2: value2 }`.
+| List of edge metrics from this node to other nodes, represented by an array of `HAS_EDGE_METRICS` relationships having properties as key/value pairs representing metric attributes and connecting `:Node:Metrics` nodes, i.e. +
+`(:Node:Metrics)-[:HAS_EDGE_METRICS]->(:Node:Metrics)`
+
 | no
 
 |===
@@ -178,7 +180,7 @@ A full return clause typically looks as follows:
   MATCH
     ...
   RETURN
-    node AS Node, node.name AS NodeLabel, parentNode AS ParentNode, nodeMetrics AS NodeMetrics, collect({to: toNode, metrics: edgeMetrics}) as EdgeMetrics
+    node AS Node, node.name AS NodeLabel, parentNode AS ParentNode, nodeMetrics AS NodeMetrics, collect(edgeMetrics) as EdgeMetrics
 ----
 
 For full examples refer to the concepts `codecharta-java:TypeReport` or `codecharta-java:MavenReport` in the file link:src/main/resources/META-INF/jqassistant-rules/codecharta-java.xml[codecharta-java.xml].
