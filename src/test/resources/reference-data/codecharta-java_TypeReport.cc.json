@@ -35,11 +35,11 @@
                   "attributes" : {
                     "complexity" : 7,
                     "fan_out" : 1,
+                    "fan_out_total" : 2,
                     "number_of_authors" : 2,
                     "number_of_commits" : 2,
                     "number_of_types" : 3,
-                    "rloc" : 10,
-                    "total_fan_out" : 2
+                    "rloc" : 10
                   },
                   "children" : [ ]
                 }, {
@@ -47,10 +47,10 @@
                   "type" : "File",
                   "attributes" : {
                     "fan_in" : 1,
+                    "fan_in_total" : 2,
                     "number_of_authors" : 1,
                     "number_of_commits" : 1,
-                    "number_of_types" : 1,
-                    "total_fan_in" : 2
+                    "number_of_types" : 1
                   },
                   "children" : [ ]
                 } ]

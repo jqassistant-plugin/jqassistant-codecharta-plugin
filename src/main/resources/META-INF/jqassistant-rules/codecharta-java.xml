@@ -168,11 +168,11 @@
             WHERE
               nodeMetrics <> dependentNodeMetrics
             WITH
-              nodeMetrics, count(dependsOn) AS fanIn, sum(dependsOn.weight) as totalFanIn
+              nodeMetrics, count(dependsOn) AS fanIn, sum(dependsOn.weight) as fanInTotal
             SET
               nodeMetrics.fanIn = fanIn
             SET
-              nodeMetrics.totalFanIn = totalFanIn
+              nodeMetrics.fanInTotal = fanInTotal
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -194,11 +194,11 @@
             WHERE
               nodeMetrics <> dependencyNodeMetrics
             WITH
-              nodeMetrics, count(dependsOn) AS fanOut, sum(dependsOn.weight) as totalFanOut
+              nodeMetrics, count(dependsOn) AS fanOut, sum(dependsOn.weight) as fanOutTotal
             SET
               nodeMetrics.fanOut = fanOut
             SET
-              nodeMetrics.totalFanOut = totalFanOut
+              nodeMetrics.fanOutTotal = fanOutTotal
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
