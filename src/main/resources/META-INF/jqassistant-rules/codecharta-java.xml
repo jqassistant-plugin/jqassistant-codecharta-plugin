@@ -66,7 +66,8 @@
         <report type="codecharta"/>
     </concept>
 
-    <concept id="codecharta-java:MavenMetrics">
+    <concept id="codecharta-java:MavenProjectAggregationLevel">
+        <providesConcept refId="codecharta:AggregationLevel"/>
         <description>Provides empty node and edge metrics for Maven modules.</description>
         <cypher><![CDATA[
             MERGE
@@ -79,26 +80,16 @@
               (project)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
             MERGE
               (aggregationLevel)-[:CONTAINS]->(nodeMetrics)
-            RETURN
-              aggregationLevel as AggregationLevel, count(distinct nodeMetrics) AS NodeMetrics
-            ]]></cypher>
-    </concept>
-
-    <concept id="codecharta-java:MavenAggregationLevel">
-        <providesConcept refId="codecharta:AggregationLevel"/>
-        <requiresConcept refId="codecharta-java:MavenMetrics"/>
-        <requiresConcept refId="java:GeneratedType"/>
-        <description>Provides empty node and edge metrics for Maven modules.</description>
-        <cypher><![CDATA[
+            WITH
+              project, aggregationLevel, nodeMetrics
             MATCH
-              (project:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics),
               (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Java:Type)
             WHERE NOT
               type:Generated
             MERGE
               (nodeMetrics)-[:AGGREGATES]->(type)
             RETURN
-              count(distinct nodeMetrics) AS NodeMetrics
+              aggregationLevel as AggregationLevel, count(distinct nodeMetrics) AS NodeMetrics
             ]]></cypher>
     </concept>
 
