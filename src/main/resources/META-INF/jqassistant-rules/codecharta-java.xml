@@ -118,8 +118,12 @@
               (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type)
             WITH
               nodeMetrics, count(type) as numberOfTypes
-            SET
-              nodeMetrics.numberOfTypes = numberOfTypes
+            CALL {
+              WITH
+                nodeMetrics, numberOfTypes
+              SET
+                nodeMetrics.numberOfTypes = numberOfTypes
+            } IN TRANSACTIONS
             RETURN
               count(nodeMetrics) as NodeMetrics
             ]]></cypher>
@@ -134,10 +138,14 @@
               (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type)-[:DECLARES]->(method:Java:Method)
             WITH
               nodeMetrics, sum(method.effectiveLineCount) AS rloc, sum(method.cyclomaticComplexity) AS complexity
-            SET
-              nodeMetrics.rloc = rloc
-            SET
-              nodeMetrics.complexity = complexity
+            CALL {
+              WITH
+                nodeMetrics, rloc, complexity
+              SET
+                nodeMetrics.rloc = rloc
+              SET
+                nodeMetrics.complexity = complexity
+            } IN TRANSACTIONS
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -160,10 +168,14 @@
               nodeMetrics <> dependentNodeMetrics
             WITH
               nodeMetrics, count(dependsOn) AS fanIn, sum(dependsOn.weight) as fanInTotal
-            SET
-              nodeMetrics.fanIn = fanIn
-            SET
-              nodeMetrics.fanInTotal = fanInTotal
+            CALL {
+              WITH
+                nodeMetrics, fanIn, fanInTotal
+              SET
+                nodeMetrics.fanIn = fanIn
+              SET
+                nodeMetrics.fanInTotal = fanInTotal
+            } IN TRANSACTIONS
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -186,10 +198,14 @@
               nodeMetrics <> dependencyNodeMetrics
             WITH
               nodeMetrics, count(dependsOn) AS fanOut, sum(dependsOn.weight) as fanOutTotal
-            SET
-              nodeMetrics.fanOut = fanOut
-            SET
-              nodeMetrics.fanOutTotal = fanOutTotal
+            CALL {
+              WITH
+                nodeMetrics, fanOut, fanOutTotal
+              SET
+                nodeMetrics.fanOut = fanOut
+              SET
+                nodeMetrics.fanOutTotal = fanOutTotal
+            } IN TRANSACTIONS
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -275,8 +291,12 @@
               (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
             WITH
               nodeMetrics, count(distinct commit) as numberOfCommits
-            SET
-              nodeMetrics.numberOfCommits = numberOfCommits
+            CALL {
+              WITH
+                nodeMetrics, numberOfCommits
+              SET
+                nodeMetrics.numberOfCommits = numberOfCommits
+            } IN TRANSACTIONS
             RETURN
               count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -297,8 +317,12 @@
               (author:Git:Author)-[:COMMITTED]->(:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
             WITH
               nodeMetrics, count(distinct author) as numberOfAuthors
-            SET
-              nodeMetrics.numberOfAuthors = numberOfAuthors
+            CALL {
+              WITH
+                nodeMetrics, numberOfAuthors
+              SET
+                nodeMetrics.numberOfAuthors = numberOfAuthors
+            } IN TRANSACTIONS
             RETURN
               count(nodeMetrics) AS NodeMetrics
         ]]></cypher>
