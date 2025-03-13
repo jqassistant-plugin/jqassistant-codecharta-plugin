@@ -25,7 +25,7 @@
             MERGE
               (metricsType)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
             MERGE
-              (nodeMetrics)-[:FOR_AGGREGATION_LEVEL]->(aggregationLevel)
+              (aggregationLevel)-[:CONTAINS]->(nodeMetrics)
             MERGE
               (nodeMetrics)-[:AGGREGATES]->(aggregatedType)
             RETURN
@@ -78,7 +78,7 @@
             MERGE
               (project)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
             MERGE
-              (nodeMetrics)-[:FOR_AGGREGATION_LEVEL]->(aggregationLevel)
+              (aggregationLevel)-[:CONTAINS]->(nodeMetrics)
             RETURN
               aggregationLevel as AggregationLevel, count(distinct nodeMetrics) AS NodeMetrics
             ]]></cypher>
@@ -162,8 +162,8 @@
         <cypher><![CDATA[
             MATCH
               (aggregationLevel:CodeCharta:AggregationLevel),
-              (type:Type)<-[:AGGREGATES]-(nodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]->(aggregationLevel),
-              (dependentType:Type)<-[:AGGREGATES]-(dependentNodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]->(aggregationLevel),
+              (aggregationLevel)-[:CONTAINS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
+              (aggregationLevel)-[:CONTAINS]->(dependentNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependentType:Type),
               (dependentType:Type)-[dependsOn:DEPENDS_ON]->(type)
             WHERE
               nodeMetrics <> dependentNodeMetrics
@@ -188,8 +188,8 @@
         <cypher><![CDATA[
             MATCH
               (aggregationLevel:CodeCharta:AggregationLevel),
-              (type:Type)<-[:AGGREGATES]-(nodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]->(aggregationLevel),
-              (dependencyType:Type)<-[:AGGREGATES]-(dependencyNodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]->(aggregationLevel),
+              (aggregationLevel)-[:CONTAINS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
+              (aggregationLevel)-[:CONTAINS]->(dependencyNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependencyType:Type),
               (type:Type)-[dependsOn:DEPENDS_ON]->(dependencyType)
             WHERE
               nodeMetrics <> dependencyNodeMetrics
@@ -214,8 +214,8 @@
         <cypher><![CDATA[
             MATCH
               (aggregationLevel:CodeCharta:AggregationLevel),
-              (type:Type)<-[:AGGREGATES]->(fromNodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]->(aggregationLevel),
-              (dependencyType:Type)<-[:AGGREGATES]->(toNodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]->(aggregationLevel),
+              (aggregationLevel)-[:CONTAINS]->(fromNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
+              (aggregationLevel)-[:CONTAINS]->(toNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependencyType:Type),
               (type)-[dependsOn:DEPENDS_ON]->(dependencyType)
             WHERE
               fromNodeMetrics <> toNodeMetrics

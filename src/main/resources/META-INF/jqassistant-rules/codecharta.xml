@@ -6,7 +6,7 @@
         <description>Provides node metrics for an aggregation level.</description>
         <cypher><![CDATA[
             MATCH
-              (nodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]-(aggregationLevel:AggregationLevel)
+              (aggregationLevel:CodeCharta:AggregationLevel)-[:CONTAINS]->(nodeMetrics:CodeCharta:Node:Metrics)
             OPTIONAL MATCH
               (nodeMetrics)-[:AGGREGATES]->(element)
             RETURN
@@ -18,9 +18,13 @@
         <description>Provided metric keys per aggregation level</description>
         <cypher><![CDATA[
             MATCH
-              (nodeMetrics:CodeCharta:Node:Metrics)-[:FOR_AGGREGATION_LEVEL]-(aggregationLevel:AggregationLevel)
+              (aggregationLevel:CodeCharta:AggregationLevel)-[:CONTAINS]->(nodeMetrics:CodeCharta:Node:Metrics)
             UNWIND
               keys(nodeMetrics) AS key
+            WITH
+              aggregationLevel, nodeMetrics, key
+            ORDER BY
+              aggregationLevel.name, key
             RETURN
               aggregationLevel as AggregationLevel, count(nodeMetrics) as Metrics, collect(DISTINCT key) as Keys
             ]]></cypher>
