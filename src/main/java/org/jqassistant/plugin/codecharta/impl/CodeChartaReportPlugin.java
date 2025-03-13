@@ -74,6 +74,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
 
     @Override
     public void setResult(Result<? extends ExecutableRule> result) throws ReportException {
+        // Identifies nodeKeys by associated metrics, required to resolve the toNode of edge metrics
         Map<NodeMetricsDescriptor, String> nodeKeysByMetric = new HashMap<>();
         Map<String, SortedMap<String, Number>> nodeMetrics = getNodeMetrics(result, nodeKeysByMetric);
         Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = getEdgeMetrics(result, nodeKeysByMetric);
@@ -109,6 +110,15 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         }
     }
 
+    /**
+     * Extracts metrics for node keys from the given {@link Result}.
+     *
+     * @param result
+     *     The {@link Result}.
+     * @param nodeKeysByMetric
+     *     A {@link Map} to identify nodes by their node metrics, this will be filled by this method.
+     * @return A {@link Map} having node keys as keys and a {@link SortedMap} representing associated metrics as values.
+     */
     private static Map<String, SortedMap<String, Number>> getNodeMetrics(Result<? extends ExecutableRule> result,
         Map<NodeMetricsDescriptor, String> nodeKeysByMetric) throws ReportException {
         Map<String, SortedMap<String, Number>> nodeMetrics = new HashMap<>();
@@ -139,8 +149,12 @@ public class CodeChartaReportPlugin implements ReportPlugin {
                     .getValue();
                 for (EdgeMetricsDescriptor edgeMetricsValue : value) {
                     String toNodeKey = nodeKeysByMetric.get(edgeMetricsValue.getTo());
-                    edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
-                        .put(toNodeKey, getMetricsFromValue(edgeMetricsValue, COLUMN_EDGE_METRICS));
+                    if (toNodeKey == null) {
+                        log.warn("Cannot determine referenced node key for edge metrics '{}'.", edgeMetricsValue);
+                    } else {
+                        edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
+                            .put(toNodeKey, getMetricsFromValue(edgeMetricsValue, COLUMN_EDGE_METRICS));
+                    }
                 }
             }
         }

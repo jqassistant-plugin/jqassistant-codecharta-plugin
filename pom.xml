@@ -48,7 +48,7 @@
 
     <properties>
         <sonar.projectKey>jqassistant-plugin_jqassistant-codecharta-plugin</sonar.projectKey>
-        <jqassistant.plugin.git.version>2.1.0</jqassistant.plugin.git.version>
+        <jqassistant.plugin.git.version>2.4.0</jqassistant.plugin.git.version>
     </properties>
 
     <dependencies>
@@ -76,12 +76,6 @@
             <groupId>de.kontext-e.jqassistant.plugin</groupId>
             <artifactId>jqassistant.plugin.git</artifactId>
             <version>${jqassistant.plugin.git.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.buschmais.jqassistant.core</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

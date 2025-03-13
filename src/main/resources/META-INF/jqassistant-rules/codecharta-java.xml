@@ -241,18 +241,7 @@
         </verify>
     </concept>
 
-    <concept id="codecharta-java:GitFileIndex">
-        <description>Creates an index on the property relativePath of :Git:File nodes.</description>
-        <cypher><![CDATA[
-            CREATE INDEX File_relativePath IF NOT EXISTS FOR (file:File) ON (file.relativePath)
-        ]]></cypher>
-        <verify>
-            <aggregation/>
-        </verify>
-    </concept>
-
     <concept id="codecharta-java:TypeHasGitSourceFile">
-        <requiresConcept refId="codecharta-java:GitFileIndex"/>
         <description>Creates a relation HAS_SOURCE_FILE between a Java type and the file from the Git history.</description>
         <cypher><![CDATA[
             MATCH

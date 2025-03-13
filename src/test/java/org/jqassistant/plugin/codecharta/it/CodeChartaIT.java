@@ -7,9 +7,9 @@ import com.buschmais.jqassistant.plugin.java.test.AbstractJavaPluginIT;
 import com.buschmais.jqassistant.plugin.maven3.api.model.MavenProjectDirectoryDescriptor;
 
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitAuthorDescriptor;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitChangeDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitFileDescriptor;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.GitChangeDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -113,7 +113,7 @@ class CodeChartaIT extends AbstractJavaPluginIT {
     private void createCommit(GitAuthorDescriptor author, GitFileDescriptor... files) {
         GitCommitDescriptor commit = store.create(GitCommitDescriptor.class);
         for (GitFileDescriptor file : files) {
-            commit.getFiles()
+            commit.getChanges()
                 .add(createChange(file));
         }
         author.getCommits()

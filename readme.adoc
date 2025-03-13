@@ -38,14 +38,19 @@ jqassistant:
     - group-id: org.jqassistant.plugin  #(1)
       artifact-id: jqassistant-codecharta-plugin
       version: 1.0.0-M1
+  scan:
+    include:
+      files:
+        - .git #(2)
   analyze:
     concepts:
-      - codecharta-java:TypeReport #(2)
-      - codecharta-java:MavenReport #(3)
+      - codecharta-java:TypeReport #(3)
+      - codecharta-java:MavenReport #(4)
 ----
 <1> Declaration of the jQAssistant CodeCharta plugin
-<2> Activates the CodeCharta report for Java types
-<3> Activates the CodeCharta report for Maven modules
+<2> Include history from local Git repository (if available)
+<3> Activates the CodeCharta report for Java types
+<4> Activates the CodeCharta report for Maven modules
 
 === Maven
 
