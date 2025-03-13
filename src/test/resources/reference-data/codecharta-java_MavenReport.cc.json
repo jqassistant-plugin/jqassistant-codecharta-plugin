@@ -13,11 +13,11 @@
         "name" : "org.jqassistant.plugin.codecharta.test:a1:1.0.0",
         "type" : "File",
         "attributes" : {
-          "fanIn" : 1,
-          "numberOfAuthors" : 1,
-          "numberOfCommits" : 1,
-          "numberOfTypes" : 1,
-          "totalFanIn" : 2
+          "fan_in" : 1,
+          "number_of_authors" : 1,
+          "number_of_commits" : 1,
+          "number_of_types" : 1,
+          "total_fan_in" : 2
         },
         "children" : [ ]
       }, {
@@ -25,12 +25,12 @@
         "type" : "File",
         "attributes" : {
           "complexity" : 7,
-          "fanOut" : 1,
-          "numberOfAuthors" : 2,
-          "numberOfCommits" : 2,
-          "numberOfTypes" : 3,
+          "fan_out" : 1,
+          "number_of_authors" : 2,
+          "number_of_commits" : 2,
+          "number_of_types" : 3,
           "rloc" : 10,
-          "totalFanOut" : 2
+          "total_fan_out" : 2
         },
         "children" : [ ]
       } ]
@@ -41,7 +41,7 @@
     "toNodeName" : "//org.jqassistant.plugin.codecharta.test:parent:1.0.0/org.jqassistant.plugin.codecharta.test:a1:1.0.0",
     "attributes" : {
       "coupling" : 1,
-      "totalCoupling" : 2
+      "total_coupling" : 2
     }
   } ]
 }

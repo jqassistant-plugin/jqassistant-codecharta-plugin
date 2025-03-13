@@ -26,6 +26,8 @@ import org.jqassistant.plugin.codecharta.impl.model.EdgeMetricsDescriptor;
 import org.jqassistant.plugin.codecharta.impl.model.NodeMetricsDescriptor;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.LOWER_UNDERSCORE;
 import static java.util.Collections.*;
 import static java.util.Optional.*;
 import static org.jqassistant.plugin.codecharta.impl.json.Node.Type.FILE;
@@ -178,7 +180,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         container.entrySet()
             .stream()
             .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof Number)
-            .forEach(entry -> metrics.put((String) entry.getKey(), (Number) entry.getValue()));
+            .forEach(entry -> metrics.put(LOWER_CAMEL.to(LOWER_UNDERSCORE, (String) entry.getKey()), (Number) entry.getValue()));
         return metrics;
     }
 
