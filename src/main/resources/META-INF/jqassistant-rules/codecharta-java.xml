@@ -227,16 +227,16 @@
             WHERE
               fromNodeMetrics <> toNodeMetrics
             WITH
-              fromNodeMetrics, count(dependsOn) as coupling, sum(dependsOn.weight) as totalCoupling, toNodeMetrics
+              fromNodeMetrics, count(dependsOn) as coupling, sum(dependsOn.weight) as couplingTotal, toNodeMetrics
             CALL {
               WITH
-                fromNodeMetrics, coupling, totalCoupling, toNodeMetrics
+                fromNodeMetrics, coupling, couplingTotal, toNodeMetrics
               MERGE
                 (fromNodeMetrics)-[edgeMetrics:HAS_EDGE_METRICS]->(toNodeMetrics)
               SET
                 edgeMetrics.coupling = coupling
               SET
-                edgeMetrics.totalCoupling = totalCoupling
+                edgeMetrics.couplingTotal = couplingTotal
               RETURN
                 edgeMetrics
             } IN TRANSACTIONS

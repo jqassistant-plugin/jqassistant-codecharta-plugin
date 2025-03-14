@@ -41,7 +41,7 @@
     "toNodeName" : "//org.jqassistant.plugin.codecharta.test:parent:1.0.0/org.jqassistant.plugin.codecharta.test:a1:1.0.0",
     "attributes" : {
       "coupling" : 1,
-      "total_coupling" : 2
+      "coupling_total" : 2
     }
   } ]
 }
