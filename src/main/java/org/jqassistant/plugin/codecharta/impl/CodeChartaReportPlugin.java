@@ -158,7 +158,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
                 for (EdgeMetricsDescriptor edgeMetricsValue : value) {
                     String toNodeKey = nodeKeysByMetric.get(edgeMetricsValue.getTo());
                     if (toNodeKey == null) {
-                        log.warn("Cannot determine referenced node from node {} with edge metrics '{}'.", ReportHelper.getLabel(fromNodeKey), edgeMetricsValue);
+                        log.warn("Cannot determine referenced node from '{}' with edge metrics '{}'.", ReportHelper.getLabel(fromNodeKey), edgeMetricsValue);
                     } else {
                         edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
                             .put(toNodeKey, getMetricsFromValue(edgeMetricsValue, COLUMN_EDGE_METRICS));
