@@ -2,34 +2,34 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
-    <concept id="codecharta-java:TypeAggregationLevel">
-        <providesConcept refId="codecharta:AggregationLevel"/>
+    <concept id="codecharta-java:TypeNodeMetrics">
+        <providesConcept refId="codecharta:NodeMetrics"/>
         <requiresConcept refId="java:GeneratedType"/>
         <requiresConcept refId="java:InnerType"/>
         <description>Provides Java types as aggregation level.</description>
         <cypher><![CDATA[
-            MERGE
-              (aggregationLevel:CodeCharta:AggregationLevel{name:":Java:Type"})
-            WITH
-              aggregationLevel
             MATCH
               (:Artifact)-[:CONTAINS]->(metricsType:Java:Type)
             WHERE NOT
               metricsType:Inner
             WITH
-              aggregationLevel, metricsType
+              metricsType
             MATCH
               (metricsType)-[:DECLARES*0..]->(aggregatedType:Java:Type)
             WHERE NOT
               aggregatedType:Generated
-            MERGE
-              (metricsType)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
-            MERGE
-              (aggregationLevel)-[:CONTAINS]->(nodeMetrics)
-            MERGE
-              (nodeMetrics)-[:AGGREGATES]->(aggregatedType)
+            CALL {
+              WITH
+                metricsType, aggregatedType
+              MERGE
+                (metricsType)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics{aggregationLevel:":Java:Type"})
+              MERGE
+                (nodeMetrics)-[:AGGREGATES]->(aggregatedType)
+              RETURN
+                nodeMetrics
+            } IN TRANSACTIONS
             RETURN
-              aggregationLevel as AggregationLevel, count(nodeMetrics) AS NodeMetrics
+              count(nodeMetrics) AS NodeMetrics
             ]]></cypher>
     </concept>
 
@@ -66,22 +66,16 @@
         <report type="codecharta"/>
     </concept>
 
-    <concept id="codecharta-java:MavenProjectAggregationLevel">
-        <providesConcept refId="codecharta:AggregationLevel"/>
+    <concept id="codecharta-java:MavenProjectNodeMetrics">
+        <providesConcept refId="codecharta:NodeMetrics"/>
         <description>Provides empty node and edge metrics for Maven modules.</description>
         <cypher><![CDATA[
-            MERGE
-              (aggregationLevel:CodeCharta:AggregationLevel{name:":Maven:Project"})
-            WITH
-              aggregationLevel
             MATCH
               (project:Maven:Project:Directory)
             MERGE
-              (project)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
-            MERGE
-              (aggregationLevel)-[:CONTAINS]->(nodeMetrics)
+              (project)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics{aggregationLevel:":Maven:Project"})
             WITH
-              project, aggregationLevel, nodeMetrics
+              project, nodeMetrics
             MATCH
               (project)-[:CREATES]->(:Artifact)-[:CONTAINS]->(type:Java:Type)
             WHERE NOT
@@ -89,7 +83,7 @@
             MERGE
               (nodeMetrics)-[:AGGREGATES]->(type)
             RETURN
-              aggregationLevel as AggregationLevel, count(distinct nodeMetrics) AS NodeMetrics
+              count(distinct nodeMetrics) AS NodeMetrics
             ]]></cypher>
     </concept>
 
@@ -111,7 +105,7 @@
 
     <concept id="codecharta-java:NumberOfTypesMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:AggregationLevel"/>
+        <requiresConcept refId="codecharta:NodeMetrics"/>
         <description>Provides numberOfTypes metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -131,7 +125,7 @@
 
     <concept id="codecharta-java:SizeAndComplexityMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:AggregationLevel"/>
+        <requiresConcept refId="codecharta:NodeMetrics"/>
         <description>Provides rloc and complexity metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -156,16 +150,16 @@
 
     <concept id="codecharta-java:FanInMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:AggregationLevel"/>
+        <requiresConcept refId="codecharta:NodeMetrics"/>
         <description>Provides fanIn metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
-              (aggregationLevel:CodeCharta:AggregationLevel),
-              (aggregationLevel)-[:CONTAINS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
-              (aggregationLevel)-[:CONTAINS]->(dependentNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependentType:Type),
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
+              (dependentNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependentType:Type),
               (dependentType:Type)-[dependsOn:DEPENDS_ON]->(type)
             WHERE
               nodeMetrics <> dependentNodeMetrics
+              and nodeMetrics.aggregationLevel = dependentNodeMetrics.aggregationLevel
             WITH
               nodeMetrics, count(dependsOn) AS fanIn, sum(dependsOn.weight) as fanInTotal
             CALL {
@@ -186,16 +180,16 @@
 
     <concept id="codecharta-java:FanOutMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:AggregationLevel"/>
+        <requiresConcept refId="codecharta:NodeMetrics"/>
         <description>Provides fanOut node metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
-              (aggregationLevel:CodeCharta:AggregationLevel),
-              (aggregationLevel)-[:CONTAINS]->(nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
-              (aggregationLevel)-[:CONTAINS]->(dependencyNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependencyType:Type),
+              (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
+              (dependencyNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependencyType:Type),
               (type:Type)-[dependsOn:DEPENDS_ON]->(dependencyType)
             WHERE
               nodeMetrics <> dependencyNodeMetrics
+              and nodeMetrics.aggregationLevel = dependencyNodeMetrics.aggregationLevel
             WITH
               nodeMetrics, count(dependsOn) AS fanOut, sum(dependsOn.weight) as fanOutTotal
             CALL {
@@ -214,18 +208,18 @@
         </verify>
     </concept>
 
-    <concept id="codecharta-java:CouplingMetrics">
+    <concept id="codecharta-java:CouplingEdgeMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:AggregationLevel"/>
+        <requiresConcept refId="codecharta:NodeMetrics"/>
         <description>Provides FanOut node and edge metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
-              (aggregationLevel:CodeCharta:AggregationLevel),
-              (aggregationLevel)-[:CONTAINS]->(fromNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
-              (aggregationLevel)-[:CONTAINS]->(toNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependencyType:Type),
+              (fromNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Type),
+              (toNodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(dependencyType:Type),
               (type)-[dependsOn:DEPENDS_ON]->(dependencyType)
             WHERE
               fromNodeMetrics <> toNodeMetrics
+              and fromNodeMetrics.aggregationLevel = toNodeMetrics.aggregationLevel
             WITH
               fromNodeMetrics, count(dependsOn) as coupling, sum(dependsOn.weight) as couplingTotal, toNodeMetrics
             CALL {
@@ -281,7 +275,7 @@
 
     <concept id="codecharta-java:NumberOfCommitsMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:AggregationLevel"/>
+        <requiresConcept refId="codecharta:NodeMetrics"/>
         <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
         <description>Provides NumberOfCommits node metrics for Java types.</description>
         <cypher><![CDATA[
@@ -307,7 +301,7 @@
 
     <concept id="codecharta-java:NumberOfAuthorsMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:AggregationLevel"/>
+        <requiresConcept refId="codecharta:NodeMetrics"/>
         <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
         <description>Provides NumberOfAuthors node metrics for Java types.</description>
         <cypher><![CDATA[

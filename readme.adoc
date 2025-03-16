@@ -3,22 +3,41 @@
 
 This is the https://codecharta.com//[CodeCharta^] plugin for https://jqassistant.org[jQAssistant^].
 
+It provides the capability to export `cc.json` reports to visualize code structures and metrics in CodeCharta for on different aggregation levels.
 
-It provides the capability to export `cc.json` reports to visualize code structures and metrics in CodeCharta.
-
-*Java types*::
+*Java Types*::
 +
 image::codecharta-java.png[Java,50%, 50%]
-* _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
-* _coupling_ and _totalCoupling_ to other types as edge metrics
 
-*Maven modules*::
+*Maven Modules*::
 +
 image::codecharta-maven.png[Maven,50%,50%]
-* aggregated _rloc_ (real lines of code) _complexity_, _fanIn_ and _fanOut_ as node metrics
-* aggregated _coupling_ and _totalCoupling_ to other Maven modules as edge metrics
 
-The plugin is designed to allow easy <<customization>>:
+The following node metrics are provided for all aggregation levels:
+
+*rloc*:: real lines of code
+
+*complexity*:: cyclomatic complexity
+
+*fan_in*:: count of incoming type dependencies
+
+*fan_in_total*:: count of total incoming dependencies, e.g. method invocations, field writes/reads, etc.
+
+*fan_out*:: count of outgoing type dependencies
+
+*fan_out_total*:: count of total outgoing dependencies, e.g. method invocations, field writes/reads, etc.
+
+*number_of_commits*:: number of Git commits
+
+*number_of_author*:: number of Git authors
+
+Furthermore, the following edge metrics are provided for all aggregation levels:
+
+*coupling*:: count of type dependencies represented by the edge
+
+*coupling_total*:: count of total dependencies represented by the edge, e.g. method invocations, field writes/reads, etc.
+
+The plugin allows easy and flexible <<customization, customization>>:
 
 * Add custom metrics to existing reports
 * Create custom reports on any tree structure providing metrics
@@ -37,7 +56,7 @@ jqassistant:
   plugins:
     - group-id: org.jqassistant.plugin  #(1)
       artifact-id: jqassistant-codecharta-plugin
-      version: 1.0.0-M1
+      version: 1.0.0-M2
   scan:
     include:
       files:
@@ -84,9 +103,9 @@ The folder `jqassistant/report/codecharta` contains the files to be imported int
 [[customization]]
 == Customization
 
-=== Additional Java metrics
+=== Custom node metrics
 
-The Java type metrics can be extended by providing an additional concept to the pre-defined concept `codecharta-java:TypeReport`.
+Existing node metrics can be extended with additional attributes by providing a concept for the pre-defined concept `codecharta:Metrics`.
 
 Just add a file `my-project.xml` to the directory `<working directory>/jqassistant`:
 
@@ -99,7 +118,7 @@ xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.
 
     <concept id="my-project:CustomTypeMetrics">
         <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:AggregationLevel"/>
+        <requiresConcept refId="codecharta:NodeMetrics"/>
         <description>Provides the count of public methods per Java type (including inner types) as node metric.</description>
         <cypher><![CDATA[
             MATCH
@@ -126,6 +145,7 @@ This concept will be activated automatically during `analyze`.
 The plugin allows to define concepts for creating custom reports as illustrated by the example below:
 
 [source,xml]
+.jqassistant/my-project.xml
 ----
 <jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.2"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -189,6 +209,74 @@ A full return clause typically looks as follows:
 ----
 
 For full examples refer to the concepts `codecharta-java:TypeReport` or `codecharta-java:MavenReport` in the file link:src/main/resources/META-INF/jqassistant-rules/codecharta-java.xml[codecharta-java.xml].
+
+=== Custom Aggregation Level
+
+Existing aggregation levels can be extended by custom aggregation levels representing specifc elements of the application architecture, e.g. `Bounded Contexts` or `Modules`. All existing metrics are automatically calculated for such aggregations.
+
+The example below illustrates an example for adding an aggregation level for modules provided by https://spring.io/projects/spring-modulith[Spring Modulith]:
+
+[source,xml]
+.jqassistant/my-project.xml
+----
+<jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.2"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
+
+    <concept id="my-project:Module"> <!--1-->
+        <description>Labels packages representing Spring Modulith Modules with :Spring:Modulith:Module .</description>
+        <cypher><![CDATA[
+            MATCH
+              (applicationPackage:Package)-[:CONTAINS]->(:Type)-[:ANNOTATED_BY]->()-[:OF_TYPE]->(:Type{fqn:"org.springframework.modulith.Modulithic"}),
+              (applicationPackage)-[:CONTAINS]->(modulePackage:Package)
+            SET
+              modulePackage:Spring:Modulith:Module
+            RETURN
+              modulePackage as Module
+        ]]></cypher>
+    </concept>
+
+    <concept id="my-project:ModuleNodeMetrics"> <!--2-->
+        <providesConcept refId="codecharta:NodeMetrics"/>
+        <requiresConcept refId="my-project:Module"/>
+        <requiresConcept refId="java:GeneratedType"/>
+        <description>Provides node metrics for packages representing Spring Modulith modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (module:Spring:Modulith:Module)-[:CONTAINS*]->(type:Java:Type)
+            WHERE NOT
+              type:Generated
+            WITH
+              module, type
+            MERGE
+              (module)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics{aggregationLevel:":Spring:Modulith:Module"})
+            MERGE
+              (nodeMetrics)-[:AGGREGATES]->(type)
+            RETURN
+              nodeMetrics.aggregationLevel as AggregationLevel, count(nodeMetrics) AS NodeMetrics
+        ]]></cypher>
+    </concept>
+
+    <concept id="my-project:ModuleReport"> <!--3-->
+        <requiresConcept refId="my-project:Module"/>
+        <requiresConcept refId="codecharta:Metrics"/>
+        <description>Creates a CodeCharta report for Spring Modulith modules.</description>
+        <cypher><![CDATA[
+            MATCH
+              (node:Spring:Modulith:Module)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+            OPTIONAL MATCH
+              (nodeMetrics)-[edgeMetrics:HAS_EDGE_METRICS]->(toNodeMetrics:CodeCharta:Node:Metrics)
+            RETURN
+              node AS Node, node.name AS NodeLabel, nodeMetrics as NodeMetrics, collect(edgeMetrics) as EdgeMetrics
+            ]]></cypher>
+        <report type="codecharta"/>
+    </concept>
+
+</jqassistant-rules>
+----
+<1> Labels Java packages as `Module`, can be used by other concepts/constraints
+<2> Adds node metrics to the `Module` using the custom aggregation level `:Spring:Modulith:Module`
+<3> Provides the report for the modules
 
 == Issues & Questions
 
