@@ -78,13 +78,13 @@ public class CodeChartaReportPlugin implements ReportPlugin {
     public void setResult(Result<? extends ExecutableRule> result) throws ReportException {
         // Identifies nodeKeys by associated metrics, required to resolve the toNode of edge metrics
         Map<NodeMetricsDescriptor, String> nodeKeysByMetric = new HashMap<>();
-        Map<String, SortedMap<String, Number>> nodeMetrics = getNodeMetrics(result, nodeKeysByMetric);
+        Map<String, String> labels = new HashMap<>();
+        Map<String, SortedMap<String, Number>> nodeMetrics = getNodeMetrics(result, nodeKeysByMetric, labels);
         Map<String, Map<String, SortedMap<String, Number>>> edgeMetrics = getEdgeMetrics(result, nodeKeysByMetric);
 
         SortedSet<String> roots = new TreeSet<>();
         Map<String, SortedSet<String>> tree = new HashMap<>();
-        Map<String, String> labels = new HashMap<>();
-        calculateTree(result, tree, roots, labels);
+        calculateTree(result, tree, roots);
         SortedMap<String, String> paths = calculatePaths(roots, tree, labels);
 
         List<Node> nodes = toNodes(roots, nodeMetrics, tree, labels);
@@ -119,22 +119,28 @@ public class CodeChartaReportPlugin implements ReportPlugin {
      *     The {@link Result}.
      * @param nodeKeysByMetric
      *     A {@link Map} to identify nodes by their node metrics, this will be filled by this method.
+     * @param labels
+     *     A {@link Map} with node keys as keys and their labels as values.
      * @return A {@link Map} having node keys as keys and a {@link SortedMap} representing associated metrics as values.
      */
     private static Map<String, SortedMap<String, Number>> getNodeMetrics(Result<? extends ExecutableRule> result,
-        Map<NodeMetricsDescriptor, String> nodeKeysByMetric) throws ReportException {
+        Map<NodeMetricsDescriptor, String> nodeKeysByMetric, Map<String, String> labels) throws ReportException {
         Map<String, SortedMap<String, Number>> nodeMetrics = new HashMap<>();
         for (Row row : result.getRows()) {
-            Column<?> elementColumn = requireColumn(row, COLUMN_NODE);
-            String elementKey = elementColumn.getLabel();
+            Column<?> nodeColumn = requireColumn(row, COLUMN_NODE);
+            String nodeKey = nodeColumn.getLabel();
             Column<Map<String, Number>> nodeMetricsColumn = requireColumn(row, COLUMN_NODE_METRICS);
             Object value = nodeMetricsColumn.getValue();
             if (value != null) {
-                nodeMetrics.put(elementKey, getMetricsFromValue(value, COLUMN_NODE_METRICS));
+                nodeMetrics.put(nodeKey, getMetricsFromValue(value, COLUMN_NODE_METRICS));
                 if (value instanceof NodeMetricsDescriptor) {
-                    nodeKeysByMetric.put((NodeMetricsDescriptor) value, elementKey);
+                    nodeKeysByMetric.put((NodeMetricsDescriptor) value, nodeKey);
                 }
             }
+            String label = getColumn(row, COLUMN_NODE_LABEL).map(Column::getLabel)
+                .orElse(nodeKey);
+            labels.put(nodeKey, label);
+
         }
         return nodeMetrics;
     }
@@ -152,7 +158,7 @@ public class CodeChartaReportPlugin implements ReportPlugin {
                 for (EdgeMetricsDescriptor edgeMetricsValue : value) {
                     String toNodeKey = nodeKeysByMetric.get(edgeMetricsValue.getTo());
                     if (toNodeKey == null) {
-                        log.warn("Cannot determine referenced node key for edge metrics '{}'.", edgeMetricsValue);
+                        log.warn("Cannot determine referenced node from node {} with edge metrics '{}'.", ReportHelper.getLabel(fromNodeKey), edgeMetricsValue);
                     } else {
                         edgeMetrics.computeIfAbsent(fromNodeKey, key -> new TreeMap<>())
                             .put(toNodeKey, getMetricsFromValue(edgeMetricsValue, COLUMN_EDGE_METRICS));
@@ -184,16 +190,13 @@ public class CodeChartaReportPlugin implements ReportPlugin {
         return metrics;
     }
 
-    private static void calculateTree(Result<? extends ExecutableRule> result, Map<String, SortedSet<String>> tree, SortedSet<String> roots,
-        Map<String, String> labels) throws ReportException {
+    private static void calculateTree(Result<? extends ExecutableRule> result, Map<String, SortedSet<String>> tree, SortedSet<String> roots)
+        throws ReportException {
         for (Row row : result.getRows()) {
             Column<?> nodeColumn = requireColumn(row, COLUMN_NODE);
             String nodeKey = nodeColumn.getLabel();
             getParentLabel(row).ifPresentOrElse(parentLabel -> tree.computeIfAbsent(parentLabel, key -> new TreeSet<>())
                 .add(nodeKey), () -> roots.add(nodeKey));
-            String label = getColumn(row, COLUMN_NODE_LABEL).map(Column::getLabel)
-                .orElse(nodeKey);
-            labels.put(nodeKey, label);
         }
     }
 
