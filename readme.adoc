@@ -64,12 +64,12 @@ jqassistant:
   analyze:
     concepts:
       - codecharta-java:TypeReport #(3)
-      - codecharta-java:MavenReport #(4)
+      - codecharta-java:MavenProjectReport #(4)
 ----
 <1> Declaration of the jQAssistant CodeCharta plugin
 <2> Include history from local Git repository (if available)
 <3> Activates the CodeCharta report for Java types
-<4> Activates the CodeCharta report for Maven modules
+<4> Activates the CodeCharta report for Maven projects
 
 === Maven
 

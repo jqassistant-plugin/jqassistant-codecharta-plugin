@@ -69,7 +69,7 @@ class CodeChartaIT extends AbstractJavaPluginIT {
     }
 
     @Test
-    void mavenReport() throws RuleException, IOException, ClassNotFoundException {
+    void mavenProjectReport() throws RuleException, IOException, ClassNotFoundException {
         store.beginTransaction();
         MavenProjectDirectoryDescriptor parent = store.create(MavenProjectDirectoryDescriptor.class);
         parent.setFullQualifiedName("org.jqassistant.plugin.codecharta.test:parent:1.0.0");
@@ -96,9 +96,9 @@ class CodeChartaIT extends AbstractJavaPluginIT {
         scanClasses("a1", TestInterface.class);
         scanClasses("a2", TestClass.class, TestClass.InnerClass.class, getInnerClass(TestClass.InnerClass.class, "1"));
 
-        applyConcept("codecharta-java:MavenReport");
+        applyConcept("codecharta-java:MavenProjectReport");
 
-        verify("codecharta-java_MavenReport.cc.json");
+        verify("codecharta-java_MavenProjectReport.cc.json");
     }
 
     private void verify(String reportFileName) throws IOException {

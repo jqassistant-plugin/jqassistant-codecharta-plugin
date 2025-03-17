@@ -38,30 +38,33 @@
         <description>Creates a CodeCharta report for Java types.</description>
         <cypher><![CDATA[
             MATCH
+              (root:Java:Package)
+            WHERE NOT
+              (:Package)-[:CONTAINS]->(root)
+            WITH
+              root
+            MATCH
               (type:Java:Type)-[:HAS_METRICS]->(:CodeCharta:Metrics),
-              tree = shortestPath((root:Java:Package)-[:CONTAINS*]->(type))
-            WHERE NOT (
-              type:Generated
-              or (:Package)-[:CONTAINS]->(root) // identify the root package
-            )
+              tree = shortestPath((root)-[:CONTAINS*]->(type))
+            WHERE
+              // filter non-Type/Package nodes providing CONTAINS-relations (e.g. service loader)
+              all (node in nodes(tree) WHERE node:Java:Type or node:Java:Package)
+              // ignore generated types
+              and not type:Generated
             WITH
               nodes(tree) as nodes
             UNWIND
-              nodes as node // filter out duplicate packages
-            WITH
-              distinct node
+              nodes as node
             OPTIONAL MATCH
               (parentNode:Package)-[:CONTAINS]->(node)
-            WITH
-              node, parentNode
             OPTIONAL MATCH
               (node)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
-            WITH
-              node, parentNode, nodeMetrics
-            OPTIONAL MATCH
-              (nodeMetrics)-[edgeMetrics:HAS_EDGE_METRICS]->(toNodeMetrics:CodeCharta:Node:Metrics)
             RETURN
-              node as Node, node.name as NodeLabel, parentNode as ParentNode, nodeMetrics as NodeMetrics, collect(edgeMetrics) as EdgeMetrics
+              node as Node,
+              node.name as NodeLabel,
+              parentNode as ParentNode,
+              nodeMetrics as NodeMetrics,
+              [(nodeMetrics)-[edgeMetrics:HAS_EDGE_METRICS]->() | edgeMetrics ] as EdgeMetrics
         ]]></cypher>
         <report type="codecharta"/>
     </concept>
@@ -87,7 +90,7 @@
             ]]></cypher>
     </concept>
 
-    <concept id="codecharta-java:MavenReport">
+    <concept id="codecharta-java:MavenProjectReport">
         <requiresConcept refId="codecharta:Metrics"/>
         <description>Creates a CodeCharta report for Maven modules.</description>
         <cypher><![CDATA[
@@ -95,10 +98,12 @@
               (node:Maven:Project:Directory)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
             OPTIONAL MATCH
               (parentNode:Maven:Project:Directory)-[:HAS_MODULE]->(node)
-            OPTIONAL MATCH
-              (nodeMetrics)-[edgeMetrics:HAS_EDGE_METRICS]->(toNodeMetrics:CodeCharta:Node:Metrics)
             RETURN
-              node AS Node, node.fqn AS NodeLabel, parentNode AS ParentNode, nodeMetrics as NodeMetrics, collect(edgeMetrics) as EdgeMetrics
+              node AS Node,
+              node.fqn AS NodeLabel,
+              parentNode AS ParentNode,
+              nodeMetrics as NodeMetrics,
+              [(nodeMetrics)-[edgeMetrics:HAS_EDGE_METRICS]->() | edgeMetrics ] as EdgeMetrics
             ]]></cypher>
         <report type="codecharta"/>
     </concept>
@@ -251,7 +256,7 @@
             WITH
               type, split(type.fileName,"/") as segments
             WITH
-              type, segments, range(0, size(segments) -2) AS indexes
+              type, segments, range(0, size(segments)-2) as indexes
             WITH
               type, reduce(path = "", index in indexes | path + segments[index] + "/") + type.sourceFileName as sourceFileName
             // find file in Git history that ends with the source file name
