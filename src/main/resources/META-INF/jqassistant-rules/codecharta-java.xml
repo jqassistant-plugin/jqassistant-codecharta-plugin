@@ -282,12 +282,13 @@
         <providesConcept refId="codecharta:Metrics"/>
         <requiresConcept refId="codecharta:NodeMetrics"/>
         <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
+        <requiresConcept refId="codecharta-git:CommitsWithinLastMonths"/>
         <description>Provides NumberOfCommits node metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
               (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
               (type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
-              (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
+              (commit:Git:Commit:Filtered)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
             WITH
               nodeMetrics, count(distinct commit) as numberOfCommits
             CALL {
@@ -308,12 +309,13 @@
         <providesConcept refId="codecharta:Metrics"/>
         <requiresConcept refId="codecharta:NodeMetrics"/>
         <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
+        <requiresConcept refId="codecharta-git:CommitsWithinLastMonths"/>
         <description>Provides NumberOfAuthors node metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
               (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
               (type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
-              (author:Git:Author)-[:COMMITTED]->(:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
+              (author:Git:Author)-[:COMMITTED]->(:Git:Commit:Filtered)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
             WITH
               nodeMetrics, count(distinct author) as numberOfAuthors
             CALL {

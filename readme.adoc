@@ -65,11 +65,14 @@ jqassistant:
     concepts:
       - codecharta-java:TypeReport #(3)
       - codecharta-java:MavenProjectReport #(4)
+    rule-parameters:
+      codechartaGitLastMonths: 3 #(5)
 ----
 <1> Declaration of the jQAssistant CodeCharta plugin
 <2> Include history from local Git repository (if available)
 <3> Activates the CodeCharta report for Java types
 <4> Activates the CodeCharta report for Maven projects
+<5> Specifies the number of last n months to consider for Git commits (optional, defaults to 12)
 
 === Maven
 

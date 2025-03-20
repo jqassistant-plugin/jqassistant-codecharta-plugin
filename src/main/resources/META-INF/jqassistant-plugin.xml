@@ -11,6 +11,7 @@
     </model>
     <rules>
         <resource>codecharta.xml</resource>
+        <resource>codecharta-git.xml</resource>
         <resource>codecharta-java.xml</resource>
     </rules>
     <report>

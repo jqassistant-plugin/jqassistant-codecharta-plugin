@@ -1,0 +1,24 @@
+<jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.2"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
+
+    <concept id="codecharta-git:CommitsWithinLastMonths">
+        <requiresParameter name="codechartaGitLastMonths" type="short" defaultValue="12"/>
+        <description>Provides Java types as aggregation level.</description>
+        <cypher><![CDATA[
+            MATCH
+              (commit:Git:Commit)
+            WHERE
+              date(commit.date) >= date() - duration({months: $codechartaGitLastMonths})
+            CALL {
+              WITH
+                commit
+              SET
+                commit:CodeCharta:Filtered
+            } IN TRANSACTIONS
+            RETURN
+              min(date(commit.date)) as MinDate, max(date(commit.date)) as MaxDate
+        ]]></cypher>
+    </concept>
+
+</jqassistant-rules>
