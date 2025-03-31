@@ -2,8 +2,8 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
-    <concept id="codecharta:NodeMetrics">
-        <description>Provides node metrics for an aggregation level.</description>
+    <concept id="codecharta:NodeMetricsPerAggregationLevel">
+        <description>Provides node metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
               (nodeMetrics:CodeCharta:Node:Metrics)
@@ -16,8 +16,8 @@
             ]]></cypher>
     </concept>
 
-    <concept id="codecharta:Metrics">
-        <description>Reports available metric keys per aggregation level</description>
+    <concept id="codecharta:MetricsAttributes">
+        <description>Provides available metrics attributes per aggregation level</description>
         <cypher><![CDATA[
             MATCH
               (nodeMetrics:CodeCharta:Node:Metrics)

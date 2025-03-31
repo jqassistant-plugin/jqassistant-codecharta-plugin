@@ -117,8 +117,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
     <concept id="my-project:CustomTypeMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetrics"/>
+        <providesConcept refId="codecharta:MetricsAttributes"/>
+        <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <description>Provides the count of public methods per Java type (including inner types) as node metric.</description>
         <cypher><![CDATA[
             MATCH
@@ -152,7 +152,8 @@ The plugin allows to define concepts for creating custom reports as illustrated 
                    xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
 
     <concept id="codecharta-test:CustomReport">
-        <requiresConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta-java:NodeMetricsPerType"/>
+        <requiresConcept refId="codecharta:MetricsAttributes"/>
         <description>Creates a custom CodeCharta report for Java types without parents and providing only node metrics.</description>
         <cypher><![CDATA[
             MATCH
@@ -236,8 +237,8 @@ The example below illustrates an example for adding an aggregation level for mod
         ]]></cypher>
     </concept>
 
-    <concept id="my-project:ModuleNodeMetrics"> <!--2-->
-        <providesConcept refId="codecharta:NodeMetrics"/>
+    <concept id="my-project:NodeMetricsPerModule"> <!--2-->
+        <providesConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <requiresConcept refId="my-project:Module"/>
         <requiresConcept refId="java:GeneratedType"/>
         <description>Provides node metrics for packages representing Spring Modulith modules.</description>
@@ -258,8 +259,8 @@ The example below illustrates an example for adding an aggregation level for mod
     </concept>
 
     <concept id="my-project:ModuleReport"> <!--3-->
-        <requiresConcept refId="my-project:Module"/>
-        <requiresConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="my-project:NodeMetricsPerModule"/>
+        <requiresConcept refId="codecharta:MetricsAttributes"/>
         <description>Creates a CodeCharta report for Spring Modulith modules.</description>
         <cypher><![CDATA[
             MATCH

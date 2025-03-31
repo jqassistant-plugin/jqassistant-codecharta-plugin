@@ -1,9 +1,9 @@
-<jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.2"
+<jqassistant-rules xmlns="http://schema.jqassistant.org/rule/v2.7"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.2 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.2.xsd">
+                   xsi:schemaLocation="http://schema.jqassistant.org/rule/v2.7 https://jqassistant.github.io/jqassistant/current/schema/jqassistant-rule-v2.7.xsd">
 
-    <concept id="codecharta-java:TypeNodeMetrics">
-        <providesConcept refId="codecharta:NodeMetrics"/>
+    <concept id="codecharta-java:NodeMetricsPerType">
+        <providesConcept refId="codecharta:NodeMetricsPerAggregationLevel" activation="if-required"/>
         <requiresConcept refId="java:GeneratedType"/>
         <requiresConcept refId="java:InnerType"/>
         <description>Provides Java types as aggregation level.</description>
@@ -34,7 +34,8 @@
     </concept>
 
     <concept id="codecharta-java:TypeReport">
-        <requiresConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta-java:NodeMetricsPerType"/>
+        <requiresConcept refId="codecharta:MetricsAttributes"/>
         <description>Creates a CodeCharta report for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -69,8 +70,8 @@
         <report type="codecharta"/>
     </concept>
 
-    <concept id="codecharta-java:MavenProjectNodeMetrics">
-        <providesConcept refId="codecharta:NodeMetrics"/>
+    <concept id="codecharta-java:NodeMetricsPerMavenProject">
+        <providesConcept refId="codecharta:NodeMetricsPerAggregationLevel" activation="if-required"/>
         <description>Provides empty node and edge metrics for Maven modules.</description>
         <cypher><![CDATA[
             MATCH
@@ -91,7 +92,8 @@
     </concept>
 
     <concept id="codecharta-java:MavenProjectReport">
-        <requiresConcept refId="codecharta:Metrics"/>
+        <requiresConcept refId="codecharta-java:NodeMetricsPerMavenProject"/>
+        <requiresConcept refId="codecharta:MetricsAttributes"/>
         <description>Creates a CodeCharta report for Maven modules.</description>
         <cypher><![CDATA[
             MATCH
@@ -109,8 +111,8 @@
     </concept>
 
     <concept id="codecharta-java:NumberOfTypesMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetrics"/>
+        <providesConcept refId="codecharta:MetricsAttributes"/>
+        <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <description>Provides numberOfTypes metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -129,8 +131,8 @@
     </concept>
 
     <concept id="codecharta-java:SizeAndComplexityMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetrics"/>
+        <providesConcept refId="codecharta:MetricsAttributes"/>
+        <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <description>Provides rloc and complexity metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -154,8 +156,8 @@
     </concept>
 
     <concept id="codecharta-java:FanInMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetrics"/>
+        <providesConcept refId="codecharta:MetricsAttributes"/>
+        <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <description>Provides fanIn metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -184,8 +186,8 @@
     </concept>
 
     <concept id="codecharta-java:FanOutMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetrics"/>
+        <providesConcept refId="codecharta:MetricsAttributes"/>
+        <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <description>Provides fanOut node metrics per aggregation level.</description>
         <cypher><![CDATA[
             MATCH
@@ -214,8 +216,8 @@
     </concept>
 
     <concept id="codecharta-java:CouplingEdgeMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetrics"/>
+        <providesConcept refId="codecharta:MetricsAttributes"/>
+        <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <description>Provides FanOut node and edge metrics for Java types.</description>
         <cypher><![CDATA[
             MATCH
@@ -279,8 +281,8 @@
     </concept>
 
     <concept id="codecharta-java:NumberOfCommitsMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetrics"/>
+        <providesConcept refId="codecharta:MetricsAttributes"/>
+        <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
         <description>Provides NumberOfCommits node metrics for Java types.</description>
         <cypher><![CDATA[
@@ -305,8 +307,8 @@
     </concept>
 
     <concept id="codecharta-java:NumberOfAuthorsMetrics">
-        <providesConcept refId="codecharta:Metrics"/>
-        <requiresConcept refId="codecharta:NodeMetrics"/>
+        <providesConcept refId="codecharta:MetricsAttributes"/>
+        <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>
         <requiresConcept refId="codecharta-java:TypeHasGitSourceFile"/>
         <description>Provides NumberOfAuthors node metrics for Java types.</description>
         <cypher><![CDATA[
