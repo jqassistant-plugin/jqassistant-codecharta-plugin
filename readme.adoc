@@ -3,7 +3,7 @@
 
 This is the https://codecharta.com//[CodeCharta^] plugin for https://jqassistant.org[jQAssistant^].
 
-It provides the capability to export `cc.json` reports to visualize code structures and metrics in CodeCharta for on different aggregation levels.
+It provides the capability to export `cc.json` reports to visualize code structures and metrics in CodeCharta on different aggregation levels.
 
 *Java Types*::
 +
@@ -65,11 +65,16 @@ jqassistant:
     concepts:
       - codecharta-java:TypeReport #(3)
       - codecharta-java:MavenProjectReport #(4)
+      - codecharta-java:ArtifactReport #(5)
 ----
 <1> Declaration of the jQAssistant CodeCharta plugin
 <2> Include history from local Git repository (if available)
 <3> Activates the CodeCharta report for Java types
 <4> Activates the CodeCharta report for Maven projects
+<5> Activates the CodeCharta report for artifacts
+
+NOTE: The Maven project report cannot be used with the CLI as it does scan the Maven module structure.
+For this case the artifact report provides a similar aggregation level but will not include module hierarchies.
 
 === Maven
 

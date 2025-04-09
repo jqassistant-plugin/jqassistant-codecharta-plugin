@@ -110,6 +110,39 @@
         <report type="codecharta"/>
     </concept>
 
+    <concept id="codecharta-java:NodeMetricsPerArtifact">
+        <providesConcept refId="codecharta:NodeMetricsPerAggregationLevel" activation="if-required"/>
+        <description>Provides empty node and edge metrics for Artifacts.</description>
+        <cypher><![CDATA[
+            MATCH
+              (artifact:Java:Artifact)-[:CONTAINS]->(type:Java:Type)
+            WHERE NOT
+              type:Generated
+            MERGE
+              (artifact)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics{aggregationLevel:":Artifact"})
+            MERGE
+              (nodeMetrics)-[:AGGREGATES]->(type)
+            RETURN
+              count(distinct nodeMetrics) AS NodeMetrics
+            ]]></cypher>
+    </concept>
+
+    <concept id="codecharta-java:ArtifactReport">
+        <requiresConcept refId="codecharta-java:NodeMetricsPerArtifact"/>
+        <requiresConcept refId="codecharta:MetricsAttributes"/>
+        <description>Creates a CodeCharta report for Artifacts.</description>
+        <cypher><![CDATA[
+            MATCH
+              (node:Java:Artifact)-[:HAS_METRICS]->(nodeMetrics:CodeCharta:Node:Metrics)
+            RETURN
+              node AS Node,
+              node.fileName AS NodeLabel,
+              nodeMetrics as NodeMetrics,
+              [(nodeMetrics)-[edgeMetrics:HAS_EDGE_METRICS]->() | edgeMetrics ] as EdgeMetrics
+            ]]></cypher>
+        <report type="codecharta"/>
+    </concept>
+
     <concept id="codecharta-java:NumberOfTypesMetrics">
         <providesConcept refId="codecharta:MetricsAttributes"/>
         <requiresConcept refId="codecharta:NodeMetricsPerAggregationLevel"/>

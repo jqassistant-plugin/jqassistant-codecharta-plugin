@@ -1,0 +1,42 @@
+{
+  "projectName" : "jQAssistant CodeCharta Report",
+  "apiVersion" : "1.2",
+  "nodes" : [ {
+    "name" : "",
+    "type" : "Folder",
+    "attributes" : { },
+    "children" : [ {
+      "name" : "a1.jar",
+      "type" : "File",
+      "attributes" : {
+        "fan_in" : 1,
+        "fan_in_total" : 2,
+        "number_of_authors" : 1,
+        "number_of_commits" : 1,
+        "number_of_types" : 1
+      },
+      "children" : [ ]
+    }, {
+      "name" : "a2.jar",
+      "type" : "File",
+      "attributes" : {
+        "complexity" : 7,
+        "fan_out" : 1,
+        "fan_out_total" : 2,
+        "number_of_authors" : 2,
+        "number_of_commits" : 2,
+        "number_of_types" : 3,
+        "rloc" : 10
+      },
+      "children" : [ ]
+    } ]
+  } ],
+  "edges" : [ {
+    "fromNodeName" : "//a2.jar",
+    "toNodeName" : "//a1.jar",
+    "attributes" : {
+      "coupling" : 1,
+      "coupling_total" : 2
+    }
+  } ]
+}

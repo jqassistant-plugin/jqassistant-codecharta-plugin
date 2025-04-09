@@ -101,6 +101,25 @@ class CodeChartaIT extends AbstractJavaPluginIT {
         verify("codecharta-java_MavenProjectReport.cc.json");
     }
 
+    @Test
+    void artifactReport() throws RuleException, IOException, ClassNotFoundException {
+        store.beginTransaction();
+        JavaClassesDirectoryDescriptor a1 = getArtifactDescriptor("a1");
+        a1.setFileName("a1.jar");
+        JavaClassesDirectoryDescriptor a2 = getArtifactDescriptor("a2");
+        a2.setFileName("a2.jar");
+
+        store.create(a2, DependsOnDescriptor.class, a1);
+        store.commitTransaction();
+
+        scanClasses("a1", TestInterface.class);
+        scanClasses("a2", TestClass.class, TestClass.InnerClass.class, getInnerClass(TestClass.InnerClass.class, "1"));
+
+        applyConcept("codecharta-java:ArtifactReport");
+
+        verify("codecharta-java_ArtifactReport.cc.json");
+    }
+
     private void verify(String reportFileName) throws IOException {
         File expectedReportFile = new File(CC_REPORT_DIRECTORY, reportFileName);
         assertThat(expectedReportFile).exists();
