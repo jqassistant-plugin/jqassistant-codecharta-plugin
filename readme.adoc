@@ -92,7 +92,15 @@ mvn test-compile com.buschmais.jqassistant:jqassistant-maven-plugin:scan com.bus
 
 TIP: In situations where Maven modules make use of extensions there might be a problem during scan ("Unable to obtain lock on file: <path>/target/jqassistant/store/data/databases/store_lock"). In this case add the parameter `-Djqassistant.maven.reuse-store=false` to the commandline and run again.
 
-After successful execution the folder `target/jqassistant/report/codecharta` contains the report files which can be imported into the CodeCharta visualization (e.g. https://codecharta.com/visualization/app/[WebStudio]).
+After successful execution the folder `target/jqassistant/report/codecharta` contains the report files which can be imported into the CodeCharta visualization, e.g.
+
+- Online via https://codecharta.com/visualization/app/[CodeCharta WebStudio]
+- Local using the Docker image provided by CodeCharta
++
+[source,bash]
+----
+docker run -p 8080:80 docker.io/codecharta/codecharta-visualization
+----
 
 === CLI
 
