@@ -56,7 +56,7 @@ jqassistant:
   plugins:
     - group-id: org.jqassistant.plugin  #(1)
       artifact-id: jqassistant-codecharta-plugin
-      version: 1.0.0-M2
+      version: 1.0.0
   scan:
     include:
       files:
