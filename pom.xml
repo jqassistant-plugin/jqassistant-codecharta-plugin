@@ -45,7 +45,7 @@
 
     <properties>
         <sonar.projectKey>jqassistant-plugin_jqassistant-codecharta-plugin</sonar.projectKey>
-        <jqassistant.plugin.git.version>2.4.0</jqassistant.plugin.git.version>
+        <jqassistant.plugin.git.version>2.4.1</jqassistant.plugin.git.version>
     </properties>
 
     <dependencies>
