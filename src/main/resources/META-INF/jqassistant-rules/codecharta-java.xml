@@ -283,7 +283,7 @@
     </concept>
 
     <concept id="codecharta-java:TypeHasGitSourceFile">
-        <description>Creates a relation HAS_SOURCE_FILE between a Java type and the file from the Git history.</description>
+        <description>Creates a relation HAS_GIT_SOURCE_FILE between a Java type and the file from the Git history.</description>
         <cypher><![CDATA[
             MATCH
               (artifact:Java:Artifact)-[:CONTAINS]->(type:Type)
@@ -303,7 +303,7 @@
               WITH
                 type, file
               MERGE
-                (type)-[:HAS_SOURCE_FILE]->(file)
+                (type)-[:HAS_GIT_SOURCE_FILE]->(file)
             } IN TRANSACTIONS
             RETURN
               count(type) as TypesWithSourceFile
@@ -321,7 +321,7 @@
         <cypher><![CDATA[
             MATCH
               (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
-              (type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
+              (type)-[:HAS_GIT_SOURCE_FILE]->(gitFile:Git:File),
               (commit:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
             WITH
               nodeMetrics, count(distinct commit) as numberOfCommits
@@ -347,7 +347,7 @@
         <cypher><![CDATA[
             MATCH
               (nodeMetrics:CodeCharta:Node:Metrics)-[:AGGREGATES]->(type:Java:Type),
-              (type)-[:HAS_SOURCE_FILE]->(gitFile:Git:File),
+              (type)-[:HAS_GIT_SOURCE_FILE]->(gitFile:Git:File),
               (author:Git:Author)-[:COMMITTED]->(:Git:Commit)-[:CONTAINS_CHANGE]->(:Git:Change)-[:MODIFIES]->(gitFile)
             WITH
               nodeMetrics, count(distinct author) as numberOfAuthors

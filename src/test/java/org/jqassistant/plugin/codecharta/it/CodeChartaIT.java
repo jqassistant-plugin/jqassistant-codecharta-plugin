@@ -2,7 +2,7 @@ package org.jqassistant.plugin.codecharta.it;
 
 import com.buschmais.jqassistant.core.rule.api.model.RuleException;
 import com.buschmais.jqassistant.plugin.common.api.model.DependsOnDescriptor;
-import com.buschmais.jqassistant.plugin.java.api.model.JavaClassesDirectoryDescriptor;
+import com.buschmais.jqassistant.plugin.java.api.model.JavaArtifactFileDescriptor;
 import com.buschmais.jqassistant.plugin.java.test.AbstractJavaPluginIT;
 import com.buschmais.jqassistant.plugin.maven3.api.model.MavenProjectDirectoryDescriptor;
 
@@ -76,7 +76,7 @@ class CodeChartaIT extends AbstractJavaPluginIT {
 
         MavenProjectDirectoryDescriptor p1 = store.create(MavenProjectDirectoryDescriptor.class);
         p1.setFullQualifiedName("org.jqassistant.plugin.codecharta.test:a1:1.0.0");
-        JavaClassesDirectoryDescriptor a1 = getArtifactDescriptor("a1");
+        JavaArtifactFileDescriptor a1 = getArtifactDescriptor("a1");
         p1.getCreatesArtifacts()
             .add(a1);
         parent.getModules()
@@ -84,7 +84,7 @@ class CodeChartaIT extends AbstractJavaPluginIT {
 
         MavenProjectDirectoryDescriptor p2 = store.create(MavenProjectDirectoryDescriptor.class);
         p2.setFullQualifiedName("org.jqassistant.plugin.codecharta.test:a2:1.0.0");
-        JavaClassesDirectoryDescriptor a2 = getArtifactDescriptor("a2");
+        JavaArtifactFileDescriptor a2 = getArtifactDescriptor("a2");
         p2.getCreatesArtifacts()
             .add(a2);
         parent.getModules()
@@ -104,9 +104,9 @@ class CodeChartaIT extends AbstractJavaPluginIT {
     @Test
     void artifactReport() throws RuleException, IOException, ClassNotFoundException {
         store.beginTransaction();
-        JavaClassesDirectoryDescriptor a1 = getArtifactDescriptor("a1");
+        JavaArtifactFileDescriptor a1 = getArtifactDescriptor("a1");
         a1.setFileName("a1.jar");
-        JavaClassesDirectoryDescriptor a2 = getArtifactDescriptor("a2");
+        JavaArtifactFileDescriptor a2 = getArtifactDescriptor("a2");
         a2.setFileName("a2.jar");
 
         store.create(a2, DependsOnDescriptor.class, a1);
